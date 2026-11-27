@@ -81,6 +81,48 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 		repaint();
 	}
 	
+	/**
+	 * Shows the alert, then nextDisplayable -- after the alert is dismissed or its timeout has passed.
+	 */
+	public void setCurrent( Alert alert, Displayable nextDisplayable ) {
+		if (alert == null || nextDisplayable == null) 	throw new NullPointerException();
+		if (nextDisplayable instanceof Alert) 			throw new IllegalArgumentException("nextDisplayable must not be an Alert");
+
+		setCurrent(alert);
+
+		//DISMISS goes back to "previous" -> make that the next displayable
+		previous = nextDisplayable;
+
+		//timeout
+		final int timeout = alert.getTimeout();
+		if (timeout == Alert.FOREVER || timeout <= 0) return;
+
+		final Alert a 			= alert;
+		final Displayable next 	= nextDisplayable;
+
+		javax.swing.Timer t = new javax.swing.Timer( timeout, e -> {
+			//only if the alert is still on screen
+			if (current == a) setCurrent(next);
+		});
+		t.setRepeats(false);
+		t.start();
+	}
+
+	/**
+	 * Shows the Form that contains item.
+	 */
+	public void setCurrentItem( Item item ) {
+		if (item == null) throw new NullPointerException();
+
+		Screen s = item.getScreen();
+		if (s == null) 		throw new IllegalStateException("item is not owned by a Form");
+		if (s instanceof Alert) throw new IllegalStateException("item is owned by an Alert");
+
+		if (s != current) setCurrent(s);
+
+		//TODO scroll to the item (Screen has no "flip to item" yet)
+	}
+
 	public void setPrevious() {
 		if (current == null)
 			return;
