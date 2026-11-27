@@ -9,13 +9,6 @@ keyboard and mouse now reach Canvas, GameCanvas and List (via the "Preprocess" m
    Form
    ...
 
-add gamepad support!
-	game controller maps very well to nokia handset:
-	dpad -> numberpad or joystick
-	A, B -> Confirm, Cancel buttons
-	L1, R1 -> open the onscreen menus which are part of Screen anyway
-
-
 write more TestMIDlets to test the Widgets
 
 search for TODO in the code... and implement/fix
