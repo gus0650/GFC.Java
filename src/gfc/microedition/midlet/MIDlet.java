@@ -48,7 +48,6 @@ public abstract class MIDlet extends Frame {
 
 		//create display
 		display = new Display((Frame)this);
-		display.resize( getWidth(), getHeight() );
 		add(display);
 
 		//go fullscreen
@@ -66,30 +65,8 @@ public abstract class MIDlet extends Frame {
 				System.out.println("fullscreen not supported on this device");
 			}
 
-			if (g.isDisplayChangeSupported()) {
-				System.out.println("changing display");
-
-				for (DisplayMode d : g.getDisplayModes()) {
-					System.out.println(d);
-				}
-
-				DisplayMode dm = new DisplayMode(
-					Integer.parseInt(properties.getProperty("window.width")), 
-					Integer.parseInt(properties.getProperty("window.height")), 
-					Integer.parseInt(properties.getProperty("window.depth")),
-					DisplayMode.REFRESH_RATE_UNKNOWN );
-
-				//most monitors don't offer small resolutions like 512x384 any more
-				try {
-					g.setDisplayMode(dm);
-				}
-				catch (IllegalArgumentException e) {
-					System.err.println("WARNING in MIDlet(): display mode not supported, keeping desktop resolution -- " + dm.getWidth() + "x" + dm.getHeight());
-				}
-			}
-			else {
-				System.err.println("display change not supported on this device");
-			}
+			//the screen resolution is NOT changed any more:
+			//monitors scale small resolutions up blurry. Display scales the game itself, with sharp pixels.
 		}
 	}	 
 
@@ -119,11 +96,20 @@ public abstract class MIDlet extends Frame {
 		MIDlet app = (MIDlet)o;
 
 		//set Window properties
-		app.resize(
-				Integer.parseInt(properties.getProperty("window.width")),
-				Integer.parseInt(properties.getProperty("window.height")));
 		app.setTitle(properties.getProperty("window.title"));
-		app.show();
+
+		if (!Boolean.parseBoolean(GetAppProperty("window.fullscreen"))) {
+			//window = handset screen x scale factor (window.scale in midlet.properties)
+			int scale = Display.getWindowScale();
+			app.display.setPreferredSize( new Dimension(
+				Display.getDisplayWidth()  * scale,
+				Display.getDisplayHeight() * scale ) );
+			app.pack();
+			app.setLocationRelativeTo(null);	//center on screen
+		}
+
+		app.setVisible(true);
+		app.display.requestFocusInWindow();
 
 		app.resume();
 	}

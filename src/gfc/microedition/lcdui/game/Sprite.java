@@ -135,6 +135,12 @@ public class Sprite extends Layer {
      */
     public final boolean collidesWith(Image image, int x, int y,
             boolean pixelLevel) {
+
+        // pixel level collision is not supported, see README
+        if (pixelLevel) {
+            throw new UnsupportedOperationException(
+                    "Sprite.collidesWith(): pixel level collision is not supported, use pixelLevel = false");
+        }
         
         // this sprite must be visible
         if (!this.visible) {
@@ -168,6 +174,12 @@ public class Sprite extends Layer {
      * @return
      */
     public final boolean collidesWith(Sprite s, boolean pixelLevel) {
+
+        // pixel level collision is not supported, see README
+        if (pixelLevel) {
+            throw new UnsupportedOperationException(
+                    "Sprite.collidesWith(): pixel level collision is not supported, use pixelLevel = false");
+        }
         
         // both sprites must be visible
         if (!this.visible || !s.visible) {
@@ -201,6 +213,12 @@ public class Sprite extends Layer {
      * @return
      */
     public final boolean collidesWith(TiledLayer t, boolean pixelLevel) {
+
+        // pixel level collision is not supported, see README
+        if (pixelLevel) {
+            throw new UnsupportedOperationException(
+                    "Sprite.collidesWith(): pixel level collision is not supported, use pixelLevel = false");
+        }
         
         // this sprite must be visible
         if (!this.visible) {

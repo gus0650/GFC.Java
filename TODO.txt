@@ -1,5 +1,7 @@
 TODO
 
+List and Menu work now (tested), Form, Alert, TextBox, ChoiceGroup still have TODOs
+
 keyboard and mouse now reach Canvas, GameCanvas and List (via the "Preprocess" methods in Displayable)
  noch offen:
    InputListener
@@ -14,22 +16,13 @@ add gamepad support!
 	L1, R1 -> open the onscreen menus which are part of Screen anyway
 
 
-issue: everything is very blurry in fullscreen mode
-  perhaps Graphic2D can somehow help
-  work on TestFullscreen.java to try and fix it
-  TestFullscreen.java now scales with nearest neighbour by a whole factor -> sharp pixels.
-  this still has to go into Display (paint into a buffer of window.width x window.height, then scale)
-
 write more TestMIDlets to test the Widgets
 
 search for TODO in the code... and implement/fix
 
-Screens (List, Form, Menu, Alert) don't work yet:
-  Display.getDefaultMenuitemActive() / getDefaultMenuitemInactive() return null -> ChoiceItem crashes
-  needs default images for menu items
-
 Font ignores Graphics.setColor() -- bitmap letters always have the color of the font image
   perhaps use gfc.util.ImageColorizer
 
-javax.microedition.io: only http, https and client sockets (socket://host:port)
-  file:// (JSR-75 FileConnection), datagrams, server sockets are not supported
+Font.getFont() always returns the default font (no sizes, no bold)
+
+what is NOT supported on purpose is listed in README.MD

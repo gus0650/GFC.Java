@@ -105,6 +105,62 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 		return current;
 	}
 
+
+	//------- device properties
+
+	public final static int
+		LIST_ELEMENT 		= 1,	//for getBestImageWidth/Height
+		CHOICE_GROUP_ELEMENT = 2,
+		ALERT 				= 3;
+
+	public boolean isColor() {
+		return true;
+	}
+
+	/** Number of colors (or gray levels on a b/w handset). The desktop has 24 bit. */
+	public int numColors() {
+		return 1 << 24;
+	}
+
+	public int numAlphaLevels() {
+		return 256;
+	}
+
+	/** The desktop has no vibrator. @return false, like a handset without vibrator */
+	public boolean vibrate(int duration) {
+		if (duration < 0) throw new IllegalArgumentException("negative duration");
+		return false;
+	}
+
+	/** The desktop has no backlight to flash. @return false */
+	public boolean flashBacklight(int duration) {
+		if (duration < 0) throw new IllegalArgumentException("negative duration");
+		return false;
+	}
+
+	/**
+	 * Runs r after all pending repaints, in the painting thread (the awt event thread).
+	 * Games use this for their game loop.
+	 */
+	public void callSerially(Runnable r) {
+		if (r == null) return;
+		java.awt.EventQueue.invokeLater(r);
+	}
+
+	public int getBestImageWidth(int imageType) {
+		checkImageType(imageType);
+		return (imageType == ALERT) ? getDisplayWidth() : getGFCFont() == null ? 16 : getGFCFont().getHeight() * 2;
+	}
+
+	public int getBestImageHeight(int imageType) {
+		checkImageType(imageType);
+		return (imageType == ALERT) ? getDisplayHeight() / 2 : getGFCFont() == null ? 16 : getGFCFont().getHeight() * 2;
+	}
+
+	private static void checkImageType(int imageType) {
+		if ( (imageType < LIST_ELEMENT) | (imageType > ALERT) ) throw new IllegalArgumentException("unknown image type " + imageType);
+	}
+
 	public void paint( Graphics g ) {
 		if (current == null) 	return;
 
@@ -214,24 +270,37 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 		//nop -- awt delivers no key code here, keyPressed() handles everything
 	}
 
+	boolean pointer_down = false;
+
 	@Override
 	public void mousePressed( MouseEvent e ) {
 		requestFocusInWindow();
 
 		if (current == null)	return;
-		current.pointerPressedPreprocess( e.getX(), e.getY() );
+		if (!isOnDisplay( e.getX(), e.getY() )) return;	//click on the black border
+
+		pointer_down = true;
+		current.pointerPressedPreprocess( toDisplayX(e.getX()), toDisplayY(e.getY()) );
 	}
 
 	@Override
 	public void mouseReleased( MouseEvent e ) {
 		if (current == null)	return;
-		current.pointerReleasedPreprocess( e.getX(), e.getY() );
+		if (!pointer_down) 		return;
+
+		pointer_down = false;
+		current.pointerReleasedPreprocess( toDisplayX(e.getX()), toDisplayY(e.getY()) );
 	}
 
 	@Override
 	public void mouseDragged( MouseEvent e ) {
 		if (current == null)	return;
-		current.pointerDraggedPreprocess( e.getX(), e.getY() );
+		if (!pointer_down) 		return;
+
+		//keep the pointer on the handset screen while dragging
+		int x = Math.max( 0, Math.min( getDisplayWidth()  - 1, toDisplayX(e.getX()) ) );
+		int y = Math.max( 0, Math.min( getDisplayHeight() - 1, toDisplayY(e.getY()) ) );
+		current.pointerDraggedPreprocess( x, y );
 	}
 
 	@Override
@@ -293,9 +362,102 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 		}
 	}
 	
-	public void paint(java.awt.Graphics g) {
-		this.g.set(g);
-		paint(this.g );
+	//------ scaling
+	//
+	//the game always paints into a buffer of window.width x window.height (the handset screen).
+	//the buffer is scaled up by a whole factor with nearest neighbour -> sharp pixels, black borders.
+	//the screen resolution is not changed any more, monitors scale small resolutions up blurry.
+
+	java.awt.image.BufferedImage buffer;
+
+	int scale = 1;			//current scale factor
+	int offset_x, offset_y;	//position of the scaled buffer in the window
+
+	public void paint(java.awt.Graphics awtg) {
+		int w = getDisplayWidth();
+		int h = getDisplayHeight();
+
+		if (buffer == null || buffer.getWidth() != w || buffer.getHeight() != h) {
+			buffer = new java.awt.image.BufferedImage( w, h, java.awt.image.BufferedImage.TYPE_INT_RGB );
+		}
+
+		//let the game paint into the buffer
+		java.awt.Graphics2D bg = buffer.createGraphics();
+		this.g.set(bg);
+		paint(this.g);
+		bg.dispose();
+
+		//largest whole factor that fits into the window; if the window is too small, shrink to fit
+		calculateScale();
+
+		java.awt.Graphics2D g2 = (java.awt.Graphics2D)awtg;
+		g2.setRenderingHint( java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+
+		//black borders
+		g2.setColor( java.awt.Color.BLACK );
+		g2.fillRect( 0, 0, getWidth(), getHeight() );
+
+		if (scale > 0) {
+			g2.drawImage( buffer, offset_x, offset_y, w * scale, h * scale, null );
+		}
+		else {
+			//window smaller than the handset screen
+			double f = Math.min( getWidth() / (double)w, getHeight() / (double)h );
+			g2.drawImage( buffer, offset_x, offset_y, (int)(w * f), (int)(h * f), null );
+		}
+	}
+
+	void calculateScale() {
+		int w = getDisplayWidth();
+		int h = getDisplayHeight();
+
+		scale = Math.min( getWidth() / w, getHeight() / h );
+
+		if (scale > 0) {
+			offset_x = ( getWidth()  - w * scale ) / 2;
+			offset_y = ( getHeight() - h * scale ) / 2;
+		}
+		else {
+			double f = Math.min( getWidth() / (double)w, getHeight() / (double)h );
+			offset_x = (int)( getWidth()  - w * f ) / 2;
+			offset_y = (int)( getHeight() - h * f ) / 2;
+		}
+	}
+
+	/** window x -> handset x */
+	int toDisplayX(int x) {
+		if (scale > 0) return (x - offset_x) / scale;
+		double f = Math.min( getWidth() / (double)getDisplayWidth(), getHeight() / (double)getDisplayHeight() );
+		return (int)( (x - offset_x) / f );
+	}
+
+	/** window y -> handset y */
+	int toDisplayY(int y) {
+		if (scale > 0) return (y - offset_y) / scale;
+		double f = Math.min( getWidth() / (double)getDisplayWidth(), getHeight() / (double)getDisplayHeight() );
+		return (int)( (y - offset_y) / f );
+	}
+
+	/** true if the window position is on the handset screen and not on the black border */
+	boolean isOnDisplay(int x, int y) {
+		int dx = toDisplayX(x);
+		int dy = toDisplayY(y);
+		return (x >= offset_x) && (y >= offset_y) && (dx < getDisplayWidth()) && (dy < getDisplayHeight());
+	}
+
+	/**
+	 * Window scale from midlet.properties: window.scale=2, or "auto" for the largest factor
+	 * that fits on the screen (80% of it, so the window does not cover everything).
+	 */
+	public static int getWindowScale() {
+		String s = MIDlet.GetAppProperty("window.scale");
+
+		if (s != null && !s.trim().equalsIgnoreCase("auto")) return Math.max(1, Integer.parseInt(s.trim()));
+
+		java.awt.Dimension screen = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+		int f = Math.min( (screen.width * 8 / 10) / getDisplayWidth(), (screen.height * 8 / 10) / getDisplayHeight() );
+
+		return Math.max(1, f);
 	}
 
 
@@ -334,12 +496,39 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 		return Integer.parseInt(MIDlet.GetAppProperty("BORDERH"));
 	}
 
+	//menu items are drawn as boxes, no image files needed.
+	//inactive: outline only, active: filled box. colors from midlet.properties (COL_ACTIVE)
+
+	static Image menuitem_inactive, menuitem_active;
+
 	public static Image getDefaultMenuitemInactive(){
-		return null; //TODO
+		if (menuitem_inactive == null) menuitem_inactive = createMenuitemBox(false);
+		return menuitem_inactive;
 	}
 
 	public static Image getDefaultMenuitemActive(){
-		return null; //TODO
+		if (menuitem_active == null) menuitem_active = createMenuitemBox(true);
+		return menuitem_active;
+	}
+
+	private static Image createMenuitemBox(boolean active) {
+		int w = getDisplayWidth() - getDefaultBorderHMargin() * 2;
+		int h = (getGFCFont() == null ? 12 : getGFCFont().getHeight()) + 4;
+
+		int col 	= 0xFF000000 | getActiveColor().getRGB();
+		int[] rgb 	= new int[w * h];	//all transparent
+
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				boolean border = (x == 0) | (y == 0) | (x == w - 1) | (y == h - 1);
+				boolean corner = ((x == 0) | (x == w - 1)) & ((y == 0) | (y == h - 1));
+
+				if (corner) 		continue;	//rounded look
+				if (border | active) rgb[y * w + x] = col;
+			}
+		}
+
+		return Image.createRGBImage(rgb, w, h, true);
 	}
 
 }

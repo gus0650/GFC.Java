@@ -28,7 +28,13 @@ Sound: WAV, AU and AIFF files play via javax.sound.sampled, ToneControl sequence
 
 Network: Connector.open() supports http://, https:// and socket://host:port. MIDlet.platformRequest() opens the desktop browser.
 
-Fullscreen mode is supported.
+Fullscreen mode is supported. The game is painted in its own resolution (window.width x window.height)
+and scaled up by a whole factor, with sharp pixels and black borders. The screen resolution is not changed.
+In window mode, window.scale sets the size of the window ("auto" = as large as fits on the screen).
+
+Saved games (RecordStore) are stored as files in [user home]/.gfc/[MIDlet class]/ -- change with rms.dir in midlet.properties.
+
+Menus (List, Menu) draw their items as boxes, no image files are needed.
 
 Keys are mapped to a Nokia handset:
 
@@ -40,7 +46,17 @@ Keys are mapped to a Nokia handset:
 | Backspace                 | clear              | -8       |
 | 0..9, numpad 0..9, * #    | number keys        | '0'..'9', '*', '#' |
 
-Alt-F4 closes the window.
+Alt-F4 closes the window, minimizing the window pauses the MIDlet.
+
+Not supported (on purpose)
+--------------------------
+- Nokia UI API (com.nokia.mid.ui: FullCanvas, DirectGraphics, DeviceControl)
+- MP3 and AMR sound -- the Player is created, but stays silent
+- file:// connections (JSR-75 FileConnection)
+- datagram connections and server sockets ("socket://:port")
+- pixel level collision: Sprite.collidesWith(..., true) throws an UnsupportedOperationException, use false
+- Display.vibrate() and flashBacklight() do nothing and return false, like a handset without vibrator
+
 
 This code was written in Visual Studio Code with the Oracle Java extension.
 Load "TestMIDlet" and it should run out of the box. (F5)
