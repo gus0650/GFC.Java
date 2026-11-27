@@ -15,4 +15,9 @@ public class Color {
 	public int getRGB() {
 		return awtcolor.getRGB();
 	}
+
+	/** RGB value in the form expected by Graphics.setColor(int). Same as getRGB(). */
+	public int getValue() {
+		return awtcolor.getRGB();
+	}
 }

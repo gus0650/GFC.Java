@@ -30,49 +30,134 @@ public abstract class Canvas extends Displayable {
 		KEY_STAR  	= 42,
 		KEY_POUND 	= 35;
 
+	//set by GameCanvas: game keys are only available through getKeyStates()
+	private boolean suppress_game_keys = false;
+
+
+	//note: in MIDP these methods are protected. they must stay protected here,
+	//otherwise games that override them as protected would not compile.
 
 	@Override
-	public abstract void paint(Graphics g);
+	protected abstract void paint(Graphics g);
 
-	
+
 	public boolean hasPointerEvents() {
 		return true;
 	}
-	
+
 	public boolean hasPointerMotionEvents() {
 		return true;
 	}
-	
+
 	public boolean hasRepeatEvents() {
-		return false;
+		return true;	//awt repeats held keys
 	}
-	
+
 	public boolean isDoubleBuffered() {
 		return true; //double buffering is handled by AWT
 	}
-	
-	public void keyPressed(int keyCode) {}
-	
-	public void keyReleased(int keyCode) {}
-	
-	
+
+	protected void keyPressed(int keyCode) {}
+
+	protected void keyReleased(int keyCode) {}
+
+	protected void keyRepeated(int keyCode) {}
+
+	protected void pointerPressed(int x, int y) {}
+
+	protected void pointerReleased(int x, int y) {}
+
+	protected void pointerDragged(int x, int y) {}
+
 	@Override
-	public void pointerPressed(int x, int y) {}
-	
-	public void pointerReleased(int x, int y) {}
-	
+	protected void hideNotify() {}
+
 	@Override
-	public void hideNotify() {}
-	
+	protected void showNotify() {}
+
+
+	//--- repaint
+
+	public final void repaint(int x, int y, int width, int height) {
+		if (display == null) return;
+		super.repaint(x, y, width, height);
+	}
+
+	/** Paints all pending repaint requests immediately. */
+	public final void serviceRepaints() {
+		if (display == null) return;
+		display.threadedRepaint();
+	}
+
+	public void setFullScreenMode(boolean mode) {
+		//nop -- a Canvas always covers the whole window
+	}
+
+
+	//--- input from Display
+
 	@Override
-	public void showNotify() {}
+	boolean keyPressedPreprocess(int keyCode) {
+		//soft keys trigger commands, if there are any on this canvas
+		if (softKeyPressed(keyCode)) return true;
+
+		if (isSuppressed(keyCode)) return true;
+
+		keyPressed(keyCode);
+		return true;
+	}
+
+	@Override
+	void keyReleasedPreprocess(int keyCode) {
+		if (isSuppressed(keyCode)) return;
+
+		keyReleased(keyCode);
+	}
+
+	@Override
+	void keyRepeatedPreprocess(int keyCode) {
+		if (isSuppressed(keyCode)) return;
+
+		keyRepeated(keyCode);
+	}
+
+	@Override
+	void pointerPressedPreprocess(int x, int y) {
+		pointerPressed(x, y);
+	}
+
+	@Override
+	void pointerReleasedPreprocess(int x, int y) {
+		pointerReleased(x, y);
+	}
+
+	@Override
+	void pointerDraggedPreprocess(int x, int y) {
+		pointerDragged(x, y);
+	}
+
+	/** Used by GameCanvas. */
+	protected final void setSuppressGameKeyEvents(boolean suppress) {
+		suppress_game_keys = suppress;
+	}
+
+	private boolean isSuppressed(int keyCode) {
+		return suppress_game_keys && (keyToGameAction(keyCode) > 0);
+	}
 
 
 	//--- keys
 
-	public int getGameAction(int keyCode) {
-		if (display == null) return -1;
-		
+	/**
+	 * Maps a key code to a game action. Works for the number keys and the cursor keys.
+	 */
+	static int keyToGameAction(int keyCode) {
+		if (keyCode == Display.KEY_UP) 		return UP;
+		if (keyCode == Display.KEY_DOWN) 	return DOWN;
+		if (keyCode == Display.KEY_LEFT) 	return LEFT;
+		if (keyCode == Display.KEY_RIGHT) 	return RIGHT;
+		if (keyCode == Display.KEY_FIRE) 	return FIRE;
+
 		if (keyCode == KEY_POUND) 	return GAME_A;
 		if (keyCode == KEY_STAR) 	return GAME_B;
 		if (keyCode == KEY_NUM0) 	return GAME_C;
@@ -83,27 +168,41 @@ public abstract class Canvas extends Displayable {
 		if (keyCode == KEY_NUM6) 	return RIGHT;
 		if (keyCode == KEY_NUM5) 	return FIRE;
 
-		return -1;
+		return 0;
 	}
-	
-	public int getKeyCode(int gameAction) {
-		if (display == null) return -1;
 
+	public int getGameAction(int keyCode) {
+		return keyToGameAction(keyCode);
+	}
+
+	public int getKeyCode(int gameAction) {
 		if (gameAction == GAME_A) 	return KEY_POUND;
 		if (gameAction == GAME_B) 	return KEY_STAR;
 		if (gameAction == GAME_C) 	return KEY_NUM0;
 		if (gameAction == GAME_D) 	return KEY_NUM9;
-		if (gameAction == UP) 		return KEY_NUM2;
-		if (gameAction == DOWN) 	return KEY_NUM8;
-		if (gameAction == LEFT) 	return KEY_NUM4;
-		if (gameAction == RIGHT) 	return KEY_NUM6;
-		if (gameAction == FIRE) 	return KEY_NUM5;
+		if (gameAction == UP) 		return Display.KEY_UP;
+		if (gameAction == DOWN) 	return Display.KEY_DOWN;
+		if (gameAction == LEFT) 	return Display.KEY_LEFT;
+		if (gameAction == RIGHT) 	return Display.KEY_RIGHT;
+		if (gameAction == FIRE) 	return Display.KEY_FIRE;
 
-		return -1;
+		throw new IllegalArgumentException("unknown game action " + gameAction);
 	}
-	
+
 	public String getKeyName(int keyCode) {
-		if (display == null) return null;
-		else return getKeyName(keyCode);
+		if ( (keyCode >= KEY_NUM0) & (keyCode <= KEY_NUM9) ) return String.valueOf( (char)keyCode );
+
+		if (keyCode == KEY_STAR) 				return "*";
+		if (keyCode == KEY_POUND) 				return "#";
+		if (keyCode == Display.KEY_UP) 			return "UP";
+		if (keyCode == Display.KEY_DOWN) 		return "DOWN";
+		if (keyCode == Display.KEY_LEFT) 		return "LEFT";
+		if (keyCode == Display.KEY_RIGHT) 		return "RIGHT";
+		if (keyCode == Display.KEY_FIRE) 		return "SELECT";
+		if (keyCode == Display.KEY_SOFT_LEFT) 	return "SOFT1";
+		if (keyCode == Display.KEY_SOFT_RIGHT) 	return "SOFT2";
+		if (keyCode == Display.KEY_CLEAR) 		return "CLEAR";
+
+		throw new IllegalArgumentException("unknown key code " + keyCode);
 	}
 }

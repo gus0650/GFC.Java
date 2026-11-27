@@ -1,7 +1,7 @@
 package gfc.audio;
 
-import javax.microedition.media.*;
-import javax.microedition.media.control.*;
+import gfc.microedition.media.*;
+import gfc.microedition.media.control.*;
 
 abstract public class Audible {
 

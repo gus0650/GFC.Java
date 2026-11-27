@@ -3,10 +3,11 @@ package gfc.microedition.lcdui;
 import gfc.graphics.Color;
 import gfc.microedition.midlet.*;
 import java.awt.event.*;
+import java.util.HashMap;
 import javax.swing.JPanel;
 
 //final public class Display extends java.awt.Canvas implements MouseListener, KeyListener {
-final public class Display extends JPanel implements MouseListener, KeyListener  {
+final public class Display extends JPanel implements MouseListener, MouseMotionListener, KeyListener  {
 //using JPanel because it has paintImmediately(x,y,w,h);
 
 	static final long serialVersionUID = 1L;
@@ -19,28 +20,29 @@ final public class Display extends JPanel implements MouseListener, KeyListener 
 
 	static Font font;
 
+	//key codes as sent by Nokia handsets. digits, * and # use their character code (see Canvas.KEY_NUM0..9)
 	public final static int
-		KEY_UP    	= 38,	//cursor
-		KEY_DOWN   	= 40,
-		KEY_LEFT  	= 37,
-		KEY_RIGHT 	= 39,
-		KEY_CR  	= 10,	//return
-		KEY_SPACE  	= 32,	//space
-		KEY_NUM0 	= 36,	//keypad
-		KEY_NUM1 	= 38,
-		KEY_NUM2 	= 33,
-		KEY_NUM3 	= 34,
-		KEY_NUM4 	= 37,
-		KEY_NUM5 	= 12,
-		KEY_NUM6 	= 39,
-		KEY_NUM7 	= 155,
-		KEY_NUM8 	= 35,
-		KEY_NUM9 	= 40;
+		KEY_UP    		= -1,	//cursor keys
+		KEY_DOWN   		= -2,
+		KEY_LEFT  		= -3,
+		KEY_RIGHT 		= -4,
+		KEY_FIRE  		= -5,	//center of the cursor keys
+		KEY_SOFT_LEFT 	= -6,
+		KEY_SOFT_RIGHT 	= -7,
+		KEY_CLEAR 		= -8;
+
+	//keys that are currently held down: awt key code -> MIDP key code
+	HashMap<Integer, Integer> keys_down = new HashMap<Integer, Integer>();
+
+	//game action bits for GameCanvas.getKeyStates()
+	static int key_states;
+	static int key_states_latched;
 		
 	public Display(java.awt.Frame frame) {
 		setFocusable(true);
 		
 		addMouseListener(this);
+		addMouseMotionListener(this);
 		addKeyListener(this);
 		
 		setSize(frame.getWidth(), frame.getHeight());
@@ -49,7 +51,8 @@ final public class Display extends JPanel implements MouseListener, KeyListener 
 		
 		painter.start();
 
-		font = null;//TODO initialize font from file!
+		font = Font.loadFromProperties();
+		if (font == null) System.err.println("WARNING in Display(): no bitmap font configured, using awt font");
 	}
 
 	public static Display getDisplay(MIDlet m) {
@@ -104,38 +107,136 @@ final public class Display extends JPanel implements MouseListener, KeyListener 
 
 	public void paint( Graphics g ) {
 		if (current == null) 	return;
-		current.paint( g );
+
+		//screens get title, ticker and command buttons; a Canvas paints the whole screen itself
+		if (current instanceof Screen) 	current.draw( g );
+		else 							current.paint( g );
 	}
 
 
 	//------- input events from AWT
+
+	/**
+	 * Translates an AWT key into a MIDP key code (Nokia layout):
+	 * <pre>
+	 * cursor keys      -> KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
+	 * return, space    -> KEY_FIRE
+	 * F1, F2           -> KEY_SOFT_LEFT, KEY_SOFT_RIGHT
+	 * backspace        -> KEY_CLEAR
+	 * 0..9, numpad 0..9, * and # -> Canvas.KEY_NUM0..9, KEY_STAR, KEY_POUND
+	 * </pre>
+	 * @return MIDP key code, or 0 if the key has no meaning on a handset
+	 */
+	static int translateKey( KeyEvent ke ) {
+		int k = ke.getKeyCode();
+
+		switch (k) {
+			case KeyEvent.VK_UP: 			return KEY_UP;
+			case KeyEvent.VK_DOWN: 			return KEY_DOWN;
+			case KeyEvent.VK_LEFT: 			return KEY_LEFT;
+			case KeyEvent.VK_RIGHT: 		return KEY_RIGHT;
+			case KeyEvent.VK_KP_UP: 		return KEY_UP;		//numpad with NumLock off
+			case KeyEvent.VK_KP_DOWN: 		return KEY_DOWN;
+			case KeyEvent.VK_KP_LEFT: 		return KEY_LEFT;
+			case KeyEvent.VK_KP_RIGHT: 		return KEY_RIGHT;
+			case KeyEvent.VK_BEGIN: 		return KEY_FIRE;	//numpad 5 with NumLock off
+			case KeyEvent.VK_CLEAR: 		return KEY_FIRE;
+			case KeyEvent.VK_ENTER: 		return KEY_FIRE;
+			case KeyEvent.VK_SPACE: 		return KEY_FIRE;
+			case KeyEvent.VK_F1: 			return KEY_SOFT_LEFT;
+			case KeyEvent.VK_F2: 			return KEY_SOFT_RIGHT;
+			case KeyEvent.VK_BACK_SPACE: 	return KEY_CLEAR;
+			case KeyEvent.VK_MULTIPLY: 		return Canvas.KEY_STAR;
+		}
+
+		//numpad
+		if ( (k >= KeyEvent.VK_NUMPAD0) & (k <= KeyEvent.VK_NUMPAD9) ) return Canvas.KEY_NUM0 + (k - KeyEvent.VK_NUMPAD0);
+
+		//number row
+		if ( (k >= KeyEvent.VK_0) & (k <= KeyEvent.VK_9) & !ke.isShiftDown() ) return Canvas.KEY_NUM0 + (k - KeyEvent.VK_0);
+
+		//* and # depend on the keyboard layout, so use the typed character
+		char c = ke.getKeyChar();
+		if (c == '*') return Canvas.KEY_STAR;
+		if (c == '#') return Canvas.KEY_POUND;
+
+		return 0;
+	}
+
+	/** Bit for GameCanvas.getKeyStates(), see GameCanvas.UP_PRESSED etc. */
+	static int gameActionBit( int keyCode ) {
+		int action = Canvas.keyToGameAction(keyCode);
+		if (action <= 0) return 0;
+
+		return 1 << action;
+	}
+
+	/** Used by GameCanvas.getKeyStates(): returns held keys plus keys pressed since the last call. */
+	public static int getKeyStates() {
+		int states = key_states | key_states_latched;
+		key_states_latched = 0;
+
+		return states;
+	}
 	
 	@Override
 	public void keyPressed( KeyEvent ke ) {
-		//nop
+		int k = translateKey(ke);
+		if (k == 0) return;
+
+		//awt sends repeated keyPressed events while a key is held down
+		boolean repeated = keys_down.containsKey( ke.getKeyCode() );
+		keys_down.put( ke.getKeyCode(), k );
+
+		key_states 			|= gameActionBit(k);
+		key_states_latched 	|= gameActionBit(k);
+
+		if (current == null)	return;
+
+		if (repeated) 	current.keyRepeatedPreprocess(k);
+		else 			current.keyPressedPreprocess(k);
 	}
 
 	@Override
 	public void keyReleased( KeyEvent ke ) {
-		//nop
+		//use the code from keyPressed, the typed character may have changed meanwhile (shift released)
+		Integer k = keys_down.remove( ke.getKeyCode() );
+		if (k == null) return;
+
+		key_states &= ~gameActionBit(k);
+
+		if (current == null)	return;
+		current.keyReleasedPreprocess(k);
 	}
 
 	@Override
 	public void keyTyped( KeyEvent ke ) {
-		if (current == null)	return;
-		current.keyEvent(ke.getKeyCode());
+		//nop -- awt delivers no key code here, keyPressed() handles everything
 	}
 
 	@Override
 	public void mousePressed( MouseEvent e ) {
+		requestFocusInWindow();
+
 		if (current == null)	return;
-		current.pointerPressed( e.getX(), e.getY() );
+		current.pointerPressedPreprocess( e.getX(), e.getY() );
 	}
 
 	@Override
 	public void mouseReleased( MouseEvent e ) {
 		if (current == null)	return;
-		current.pointerReleased();
+		current.pointerReleasedPreprocess( e.getX(), e.getY() );
+	}
+
+	@Override
+	public void mouseDragged( MouseEvent e ) {
+		if (current == null)	return;
+		current.pointerDraggedPreprocess( e.getX(), e.getY() );
+	}
+
+	@Override
+	public void mouseMoved( MouseEvent e ) { 
+		//nop -- handsets have no mouse pointer
 	}
 
 	@Override
@@ -151,12 +252,6 @@ final public class Display extends JPanel implements MouseListener, KeyListener 
 	@Override
 	public void mouseClicked( MouseEvent e ) {
 		//nop
-	}
-
-	//custom add
-	public void mouseMoved( MouseEvent e ) {
-		if (current == null)	return;
-		current.pointerMoved( e.getX(), e.getY() );
 	}
 
 	
@@ -207,13 +302,13 @@ final public class Display extends JPanel implements MouseListener, KeyListener 
 	//----- custom methods
 
 	static Color acol = new Color(
-		Integer.parseInt(MIDlet.GetAppProperty("COL_PASSIVE")) );
+		Integer.parseInt(MIDlet.GetAppProperty("COL_ACTIVE")) );
 	public static Color getActiveColor() {
 		return acol;
 	}
 
 	static Color pcol = new Color(
-		Integer.parseInt(MIDlet.GetAppProperty("COL_ACTIVE")) );
+		Integer.parseInt(MIDlet.GetAppProperty("COL_PASSIVE")) );
 	public static Color getPassiveColor() {
 		return pcol;
 	}
@@ -222,12 +317,13 @@ final public class Display extends JPanel implements MouseListener, KeyListener 
 		return font;
 	}
 
+	//note: WIDTH and HEIGHT are constants inherited from awt (ImageObserver), not the screen size!
 	public static int getDisplayWidth() {
-		return WIDTH;		
+		return Integer.parseInt( MIDlet.GetAppProperty("window.width") );
 	}
 
 	public static int getDisplayHeight() {
-		return HEIGHT;
+		return Integer.parseInt( MIDlet.GetAppProperty("window.height") );
 	}
 
 	public static int getDefaultBorderVMargin() {
