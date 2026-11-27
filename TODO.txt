@@ -31,6 +31,5 @@ Screens (List, Form, Menu, Alert) don't work yet:
 Font ignores Graphics.setColor() -- bitmap letters always have the color of the font image
   perhaps use gfc.util.ImageColorizer
 
-javax.microedition.media: MIDI is not played (Player stays silent)
-
-javax.microedition.io is not implemented (Connector, HttpConnection, platformRequest)
+javax.microedition.io: only http, https and client sockets (socket://host:port)
+  file:// (JSR-75 FileConnection), datagrams, server sockets are not supported

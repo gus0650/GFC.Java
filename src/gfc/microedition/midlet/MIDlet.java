@@ -1,5 +1,6 @@
 package gfc.microedition.midlet;
 
+import gfc.microedition.io.ConnectionNotFoundException;
 import gfc.microedition.lcdui.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -184,6 +185,32 @@ public abstract class MIDlet extends Frame {
 	/** MIDP version: reads a property of the MIDlet (from midlet.properties). */
 	public final String getAppProperty(String key) {
 		return properties.getProperty(key);
+	}
+
+	/**
+	 * Opens a URL in the desktop's browser (the handset would open its WAP browser).
+	 * "tel:" URLs can't be handled on the desktop.
+	 * 
+	 * @return false -- the request is handled while the MIDlet keeps running
+	 */
+	public final boolean platformRequest(String url) throws ConnectionNotFoundException {
+		if (url == null || url.length() == 0) return false;	//empty URL cancels pending requests
+
+		if (url.startsWith("tel:")) throw new ConnectionNotFoundException("ERROR in MIDlet.platformRequest(): phone calls are not supported - " + url);
+
+		try {
+			if (!java.awt.Desktop.isDesktopSupported()) throw new ConnectionNotFoundException("ERROR in MIDlet.platformRequest(): no browser available");
+
+			java.awt.Desktop.getDesktop().browse( new java.net.URI(url) );
+		}
+		catch (ConnectionNotFoundException e) {
+			throw e;
+		}
+		catch (Exception e) {
+			throw new ConnectionNotFoundException("ERROR in MIDlet.platformRequest(): could not open - " + url);
+		}
+
+		return false;
 	}
 
 	/** All permissions are granted on the desktop. */
