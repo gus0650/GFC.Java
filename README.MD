@@ -24,7 +24,7 @@ The Font class uses bitmap fonts. The default font is configured in midlet.prope
 Images and sounds are loaded from the classpath like on the handset ("/res/img.png"), so they also work from inside a .jar.
 If a file is not found in the classpath, it is loaded from the working directory.
 
-Sound: WAV, AU and AIFF files play via javax.sound.sampled, ToneControl sequences and Manager.playTone() are synthesized. MIDI is silent.
+Sound: WAV, AU and AIFF files play via javax.sound.sampled, ToneControl sequences and Manager.playTone() are synthesized. MIDI files play via javax.sound.midi.
 
 Network: Connector.open() supports http://, https:// and socket://host:port. MIDlet.platformRequest() opens the desktop browser.
 

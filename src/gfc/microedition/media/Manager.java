@@ -7,7 +7,8 @@ import java.io.*;
  * <p>
  * Sampled audio (WAV, AIFF, AU) is played via javax.sound.sampled.
  * Tone sequences (ToneControl) are synthesized into PCM and played the same way.
- * MIDI and other formats are not supported yet: those players are created but stay silent.
+ * MIDI files are played via javax.sound.midi.
+ * Other formats (MP3, AMR) are not supported: those players are created but stay silent.
  */
 public final class Manager {
 
@@ -17,7 +18,7 @@ public final class Manager {
 	private Manager() { }
 
 	public static String[] getSupportedContentTypes(String protocol) {
-		return new String[] { "audio/x-wav", "audio/wav", "audio/basic", "audio/x-aiff", "audio/x-tone-seq" };
+		return new String[] { "audio/x-wav", "audio/wav", "audio/basic", "audio/x-aiff", "audio/midi", "audio/mid", "audio/x-midi", "audio/x-tone-seq" };
 	}
 
 	public static String[] getSupportedProtocols(String contentType) {
@@ -33,7 +34,13 @@ public final class Manager {
 		int n;
 		while ((n = stream.read(buf)) > 0) bos.write(buf, 0, n);
 
-		return new SampledPlayer(bos.toByteArray(), type);
+		byte[] data = bos.toByteArray();
+
+		//MIDI: by content type, or by the "MThd" header (some games pass a wrong type)
+		boolean midi = (type != null && type.toLowerCase().contains("mid")) || MidiPlayer.isMidi(data);
+		if (midi) return new MidiPlayer(data);
+
+		return new SampledPlayer(data, type);
 	}
 
 	public static Player createPlayer(String locator) throws IOException, MediaException {
