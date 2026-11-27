@@ -1,5 +1,5 @@
-GFC MIDP Wrapper
-================
+GFC.Java MIDP Wrapper
+=====================
 (c) 2006-2025<br>
 written by Gustaf Stechmann and Alex Knorr <br>
 placed in the public domain.<br>
