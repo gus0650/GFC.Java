@@ -1,14 +1,10 @@
 TODO
 
-i could not get VSCode to compile all classes at once, so there may be bugs that i am not aware of
-
-default font is missing and loading is not fully implemented
-
-inputs from keyboard and mouse are not processed
- hierzu gab es in GFC2.1 diverse "PreProcessed" methoden
- es betrifft insbes
+keyboard and mouse now reach Canvas, GameCanvas and List (via the "Preprocess" methods in Displayable)
+ noch offen:
    InputListener
    TextBox
+   Form
    ...
 
 add gamepad support!
@@ -21,9 +17,20 @@ add gamepad support!
 issue: everything is very blurry in fullscreen mode
   perhaps Graphic2D can somehow help
   work on TestFullscreen.java to try and fix it
+  TestFullscreen.java now scales with nearest neighbour by a whole factor -> sharp pixels.
+  this still has to go into Display (paint into a buffer of window.width x window.height, then scale)
 
 write more TestMIDlets to test the Widgets
 
 search for TODO in the code... and implement/fix
 
-javax.microedition.media is not implemented at all
+Screens (List, Form, Menu, Alert) don't work yet:
+  Display.getDefaultMenuitemActive() / getDefaultMenuitemInactive() return null -> ChoiceItem crashes
+  needs default images for menu items
+
+Font ignores Graphics.setColor() -- bitmap letters always have the color of the font image
+  perhaps use gfc.util.ImageColorizer
+
+javax.microedition.media: MIDI is not played (Player stays silent)
+
+javax.microedition.io is not implemented (Connector, HttpConnection, platformRequest)

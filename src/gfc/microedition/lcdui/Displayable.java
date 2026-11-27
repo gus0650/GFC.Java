@@ -69,11 +69,12 @@ public abstract class Displayable {
 	}
 
 	public void repaint() {
+		if (display == null) return;	//not on screen yet
 		display.repaint();
 	}
 
 	void repaint(int x, int y, int width, int height) {
-		//if (display == null) return;
+		if (display == null) return;
 		display.repaint(x, y, width, height);
 	}
 	
@@ -83,12 +84,13 @@ public abstract class Displayable {
 
 	//---- size
 
+	//works also before the Displayable is shown, like on the handset
 	public int getWidth() {
-		return display.getWidth();
+		return Display.getDisplayWidth();
 	}
 	
 	public int getHeight() {
-		int h = display.getHeight();
+		int h = Display.getDisplayHeight();
 		
 		if (ticker   != null) 			h -= ticker.getHeight();
 		
@@ -260,13 +262,47 @@ public abstract class Displayable {
 	protected void showNotify() {}
 
 	
-	protected void keyEvent(int k) {}
+	//input events -- overridden by Canvas (passes them on to the game) and by Screens like List.
+	//the soft keys open the menu or fire the command of the left/right button.
 
-	protected void pointerMoved(int x, int y) {}
+	boolean keyPressedPreprocess(int keyCode) {
+		return softKeyPressed(keyCode);
+	}
 
-	protected void pointerReleased() {}
+	void keyReleasedPreprocess(int keyCode) {}
 
-	protected void pointerPressed(int x, int y) {}
+	void keyRepeatedPreprocess(int keyCode) {}
+
+	void pointerPressedPreprocess(int x, int y) {}
+
+	void pointerReleasedPreprocess(int x, int y) {}
+
+	void pointerDraggedPreprocess(int x, int y) {}
+
+
+	/**
+	 * Handles the soft keys of the handset.
+	 * @return true if the key was a soft key with a command on it
+	 */
+	boolean softKeyPressed(int keyCode) {
+		Button btn 	= null;
+		Menu menu 	= null;
+
+		if (keyCode == Display.KEY_SOFT_LEFT) 	{ btn = btn_left; 	menu = d_menu_left; }
+		if (keyCode == Display.KEY_SOFT_RIGHT) 	{ btn = btn_right; 	menu = d_menu_right; }
+
+		if (btn == null) return false;
+
+		//more than one command on this side -> open menu
+		if (menu != null) {
+			display.setCurrent(menu);
+			return true;
+		}
+
+		if (d_command_listener != null) d_command_listener.commandAction( btn.getCommand(), this );
+
+		return true;
+	}
 	
 
 }

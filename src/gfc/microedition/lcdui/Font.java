@@ -113,7 +113,7 @@ public class Font extends TiledImage {
 	}
 
 	
-	private int getFace() {
+	public int getFace() {
 		return FACE_MONOSPACE;
 	}
 	
@@ -123,6 +123,39 @@ public class Font extends TiledImage {
 	 */
 	public int getHeight() {
 		return tile_height + vspacing;
+	}
+	
+
+	/**
+	 * Get the distance from the top of a letter to the baseline.
+	 * Bitmap letters sit on the bottom of their tile.
+	 */
+	public int getBaselinePosition() {
+		return tile_height;
+	}
+
+	public int getStyle() {
+		return STYLE_PLAIN;
+	}
+
+	public int getSize() {
+		return SIZE_MEDIUM;
+	}
+
+	public boolean isPlain() {
+		return true;
+	}
+
+	public boolean isBold() {
+		return false;
+	}
+
+	public boolean isItalic() {
+		return false;
+	}
+
+	public boolean isUnderlined() {
+		return false;
 	}
 	
 
@@ -160,24 +193,59 @@ public class Font extends TiledImage {
 	}
 
 	public int substringWidth(String str, int offset, int length) {
-		return ( tile_width + hspacing ) * length;
+		return stringWidth(length);
 	}
 
 	public int charsWidth(char[] ch, int offset, int length) { 
-		return ( tile_width + hspacing ) * length;
+		return stringWidth(length);
 	}
 	
 	public int charWidth(char ch) { 
-		return ( tileWidth() - hspacing );
+		return tile_width;
 	}
 	
 	public static Font getDefaultFont() { 
 		return Display.getGFCFont();
 	}
+
+	
+	/**
+	 * Loads a bitmap font as described in midlet.properties:
+	 * font.image, font.width, font.height, font.hspacing, font.vspacing, font.offset
+	 * 
+	 * @return the font, or null if no font is configured
+	 */
+	static Font loadFromProperties() {
+		String file = MIDlet.GetAppProperty("font.image");
+		if (file == null) return null;
+
+		try {
+			Image img = Image.createImage( file.trim() );
+
+			return new Font( img,
+				getIntProperty("font.width", 	5),
+				getIntProperty("font.height", 	7),
+				getIntProperty("font.hspacing", 1),
+				getIntProperty("font.vspacing", 1),
+				getIntProperty("font.offset", 	33) );
+		}
+		catch (Exception e) {
+			System.err.println("ERROR in Font.loadFromProperties(): font could not be loaded - " + file );
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private static int getIntProperty(String key, int fallback) {
+		String v = MIDlet.GetAppProperty(key);
+		if (v == null) return fallback;
+
+		return Integer.parseInt(v.trim());
+	}
 	
 	
 	public static Font getFont(int face, int style, int size) { 
-		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.err.println("WARNING in Font.substringWidth(): this method always returns default font" );
+		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.err.println("WARNING in Font.getFont(): this method always returns default font" );
 
 		return getDefaultFont();
 	}

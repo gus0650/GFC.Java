@@ -485,7 +485,8 @@ abstract public class Widget {
 	}
 	
 	public void repaint() {
-        displayable.repaint();
+		if (displayable == null) return;	//not attached to a screen yet
+		displayable.repaint();
 	}
 
 	//TODO

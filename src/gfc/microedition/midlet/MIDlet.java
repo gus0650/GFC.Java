@@ -19,10 +19,29 @@ public abstract class MIDlet extends Frame {
 		String workingDir = System.getProperty("user.dir");
 		System.out.println("current working directory: " + workingDir);
 
-		//close window when X button is clicked
+		//window events -> MIDlet life cycle
 		addWindowListener(new WindowAdapter() {
+			//X button or Alt-F4
 			public void windowClosing(WindowEvent e) {
-				dispose();
+				try {
+					destroyApp(true);
+				}
+				catch (MIDletStateChangeException ex) {
+					//unconditional destroy -- exception is ignored, like on the handset
+				}
+				notifyDestroyed();
+			}
+
+			//minimized -> pause, like an incoming call on the handset
+			public void windowIconified(WindowEvent e) {
+				if (paused) return;
+
+				paused = true;
+				pauseApp();
+			}
+
+			public void windowDeiconified(WindowEvent e) {
+				resume();
 			}
 		});
 
@@ -58,7 +77,14 @@ public abstract class MIDlet extends Frame {
 					Integer.parseInt(properties.getProperty("window.height")), 
 					Integer.parseInt(properties.getProperty("window.depth")),
 					DisplayMode.REFRESH_RATE_UNKNOWN );
-				g.setDisplayMode(dm);
+
+				//most monitors don't offer small resolutions like 512x384 any more
+				try {
+					g.setDisplayMode(dm);
+				}
+				catch (IllegalArgumentException e) {
+					System.err.println("WARNING in MIDlet(): display mode not supported, keeping desktop resolution -- " + dm.getWidth() + "x" + dm.getHeight());
+				}
 			}
 			else {
 				System.err.println("display change not supported on this device");
@@ -98,7 +124,7 @@ public abstract class MIDlet extends Frame {
 		app.setTitle(properties.getProperty("window.title"));
 		app.show();
 
-		app.startApp();
+		app.resume();
 	}
 	
 	//overriding update method to avoid flicker
@@ -107,12 +133,24 @@ public abstract class MIDlet extends Frame {
 		paint( g );
 	}
 
-	//TODO call pauseApp() when awt frame is out of focus
-	//TODO call startApp() when awt frame is back in focus
-	//TODO call destroyApp() when awt frame closes
-	//TODO call resumeRequest() ..?
-
 	//--- custom methods
+
+	boolean paused = true;
+
+	/** Calls startApp(), on first start and when coming back from pause. */
+	void resume() {
+		if (!paused) return;
+
+		try {
+			paused = false;
+			startApp();
+		}
+		catch (MIDletStateChangeException e) {
+			//MIDlet does not want to start now
+			paused = true;
+			System.err.println("WARNING in MIDlet.resume(): startApp() refused to start -- " + e.getMessage());
+		}
+	}
 
 	public Display getDisplay() {
 		return display;
@@ -122,12 +160,36 @@ public abstract class MIDlet extends Frame {
 	//---inherited from MIDlet
 
 	final protected void notifyStarted() { }
-	final protected void notifyPaused() { }
-	final protected void notifyDestroyed() { }
 
-	abstract protected void startApp();
+	/** The MIDlet tells us it has paused itself. */
+	public final void notifyPaused() {
+		paused = true;
+	}
+
+	/** The MIDlet tells us it is finished -> close the window and quit. */
+	public final void notifyDestroyed() {
+		dispose();
+		System.exit(0);
+	}
+
+	/** The MIDlet wants to be started again after pausing itself. */
+	public final void resumeRequest() {
+		java.awt.EventQueue.invokeLater( () -> resume() );
+	}
+
+	abstract protected void startApp() throws MIDletStateChangeException;
 	abstract protected void pauseApp();
-	abstract protected void destroyApp(boolean b);
+	abstract protected void destroyApp(boolean unconditional) throws MIDletStateChangeException;
+
+	/** MIDP version: reads a property of the MIDlet (from midlet.properties). */
+	public final String getAppProperty(String key) {
+		return properties.getProperty(key);
+	}
+
+	/** All permissions are granted on the desktop. */
+	public final int checkPermission(String permission) {
+		return 1;
+	}
 
 	public static String GetAppProperty(String s) {
 		return properties.getProperty(s);

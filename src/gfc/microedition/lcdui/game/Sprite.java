@@ -13,6 +13,28 @@ import gfc.microedition.lcdui.*;
  */
 public class Sprite extends Layer {
 
+    /** transforms, same values as in MIDP */
+    public static final int TRANS_NONE = 0;
+    public static final int TRANS_MIRROR_ROT180 = 1;
+    public static final int TRANS_MIRROR = 2;
+    public static final int TRANS_ROT180 = 3;
+    public static final int TRANS_MIRROR_ROT270 = 4;
+    public static final int TRANS_ROT90 = 5;
+    public static final int TRANS_ROT270 = 6;
+    public static final int TRANS_MIRROR_ROT90 = 7;
+
+    /** current transform */
+    private int transform = TRANS_NONE;
+
+    /** untransformed frame width (Layer.width is the transformed width) */
+    private int frameWidth;
+
+    /** untransformed frame height (Layer.height is the transformed height) */
+    private int frameHeight;
+
+    /** collision rectangle after transformation, used by collidesWith() */
+    private int tCollisionRectX, tCollisionRectY, tCollisionRectWidth, tCollisionRectHeight;
+
     /** source image */
     private Image sourceImage;
 
@@ -49,8 +71,11 @@ public class Sprite extends Layer {
         super(image.getWidth(), image.getHeight());
 
         this.sourceImage = image;
+        this.frameWidth = image.getWidth();
+        this.frameHeight = image.getHeight();
         this.collisionRectWidth = image.getWidth();
         this.collisionRectHeight = image.getHeight();
+        updateCollisionRect();
     }
 
     /**
@@ -65,8 +90,11 @@ public class Sprite extends Layer {
         super(frameWidth, frameHeight);
 
         this.sourceImage = image;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;
         this.collisionRectWidth = frameWidth;
         this.collisionRectHeight = frameHeight;
+        updateCollisionRect();
     }
 
     /**
@@ -88,6 +116,11 @@ public class Sprite extends Layer {
         this.collisionRectHeight = s.collisionRectHeight;
         this.dRefX = s.dRefX;
         this.dRefY = s.dRefY;
+        this.transform = s.transform;
+        this.frameWidth = s.frameWidth;
+        this.frameHeight = s.frameHeight;
+        this.visible = s.visible;
+        updateCollisionRect();
     }
 
     /**
@@ -108,19 +141,19 @@ public class Sprite extends Layer {
             return (false);
         }
 
-        // translate x to this sprite´s collision-rect coordinate system
-        x -= this.x + this.collisionRectX;
+        // translate x to this spriteÂ´s collision-rect coordinate system
+        x -= this.x + this.tCollisionRectX;
 
         // check for overlap in x-axis
-        if ((x + image.getWidth()) <= 0 || x >= this.collisionRectWidth) {
+        if ((x + image.getWidth()) <= 0 || x >= this.tCollisionRectWidth) {
             return (false);
         }
 
-        // translate y to this sprite´s collision-rect coordinate system
-        y -= this.y + this.collisionRectY;
+        // translate y to this spriteÂ´s collision-rect coordinate system
+        y -= this.y + this.tCollisionRectY;
 
         // check for overlap in y-axis
-        if ((y + image.getHeight()) <= 0 || y >= this.collisionRectHeight) {
+        if ((y + image.getHeight()) <= 0 || y >= this.tCollisionRectHeight) {
             return (false);
         }
 
@@ -141,19 +174,19 @@ public class Sprite extends Layer {
             return (false);
         }
 
-        // translate x to this sprite´s collision-rect coordinate system
-        int x = (s.x + s.collisionRectX) - (this.x + this.collisionRectX);
+        // translate x to this spriteÂ´s collision-rect coordinate system
+        int x = (s.x + s.tCollisionRectX) - (this.x + this.tCollisionRectX);
 
         // check for overlap in x-axis
-        if ((x + s.collisionRectWidth) <= 0 || x >= this.collisionRectWidth) {
+        if ((x + s.tCollisionRectWidth) <= 0 || x >= this.tCollisionRectWidth) {
             return (false);
         }
 
-        // translate y to this sprite´s collision-rect coordinate system
-        int y = (s.y + s.collisionRectY) - (this.y + this.collisionRectY);
+        // translate y to this spriteÂ´s collision-rect coordinate system
+        int y = (s.y + s.tCollisionRectY) - (this.y + this.tCollisionRectY);
 
         // check for overlap in y-axis
-        if ((y + s.collisionRectHeight) <= 0 || y >= this.collisionRectHeight) {
+        if ((y + s.tCollisionRectHeight) <= 0 || y >= this.tCollisionRectHeight) {
             return (false);
         }
 
@@ -174,9 +207,9 @@ public class Sprite extends Layer {
             return (false);
         }
 
-        return t.collidesWithRect(this.x + this.collisionRectX, this.y
-                + this.collisionRectY, this.collisionRectWidth,
-                this.collisionRectHeight);
+        return t.collidesWithRect(this.x + this.tCollisionRectX, this.y
+                + this.tCollisionRectY, this.tCollisionRectWidth,
+                this.tCollisionRectHeight);
     }
 
     /**
@@ -194,6 +227,7 @@ public class Sprite extends Layer {
         this.collisionRectY = y;
         this.collisionRectWidth = width;
         this.collisionRectHeight = height;
+        updateCollisionRect();
     }
 
     /**
@@ -246,7 +280,7 @@ public class Sprite extends Layer {
      * @return
      */
     public int getRawFrameCount() {
-        return (sourceImage.getWidth() / width * sourceImage.getHeight() / height);
+        return (sourceImage.getWidth() / frameWidth * sourceImage.getHeight() / frameHeight);
     }
 
     /**
@@ -256,7 +290,7 @@ public class Sprite extends Layer {
      * @return
      */
     public int getRefPixelX() {
-        return (this.x + this.dRefX);
+        return (this.x + getTransformedRefX());
     }
 
     /**
@@ -266,7 +300,7 @@ public class Sprite extends Layer {
      * @return
      */
     public int getRefPixelY() {
-        return (this.y + this.dRefY);
+        return (this.y + getTransformedRefY());
     }
 
     /**
@@ -292,40 +326,19 @@ public class Sprite extends Layer {
             return;
         }
 
-        int x = this.x;
-        int y = this.y;
+        // get frame index
+        int frame = (frameSequence != null) ? this.frameSequence[this.sequenceIndex]
+                : this.sequenceIndex;
 
-        if (getRawFrameCount() > 1) {
+        // calculate frame position within the sourceImage
+        int framesHorz = this.sourceImage.getWidth() / this.frameWidth;
+        int frameX = (frame % framesHorz) * this.frameWidth;
+        int frameY = (frame / framesHorz) * this.frameHeight;
 
-            // save clip
-            int cx = g.getClipX();
-            int cy = g.getClipY();
-            int cw = g.getClipWidth();
-            int ch = g.getClipHeight();
-
-            // clip to sprite area
-            g.clipRect(x, y, this.width, this.height);
-
-            // get frame index
-            int frame = (frameSequence != null) ? this.frameSequence[this.sequenceIndex]
-                    : this.sequenceIndex;
-
-            // calculate frame position within the sourceImage
-            int framesHorz = this.sourceImage.getWidth() / this.width;
-            x = x - (frame % framesHorz) * this.width;
-            y = y - (frame / framesHorz) * this.height;
-
-            // draw frame
-            g.drawImage(this.sourceImage, x, y);
-
-            // restore clip
-            g.setClip(cx, cy, cw, ch);
-
-        } else {
-
-            // draw whole source image
-            g.drawImage(this.sourceImage, x, y);
-        }
+        // draw frame, mirrored/rotated if necessary
+        g.drawRegion(this.sourceImage, frameX, frameY, this.frameWidth,
+                this.frameHeight, this.transform, this.x, this.y,
+                Graphics.TOP | Graphics.LEFT);
     }
 
     /**
@@ -372,7 +385,7 @@ public class Sprite extends Layer {
         int rawFrameCount = getRawFrameCount();
 
         for (int i = sequence.length - 1; i >= 0; i--) {
-            if (sequence[i] < 0 || sequence[0] >= rawFrameCount) {
+            if (sequence[i] < 0 || sequence[i] >= rawFrameCount) {
                 throw new ArrayIndexOutOfBoundsException();
             }
         }
@@ -392,11 +405,23 @@ public class Sprite extends Layer {
 
         int oldRawFrameCount = getRawFrameCount();
 
+        // keep the reference pixel where it is
+        int refX = getRefPixelX();
+        int refY = getRefPixelY();
+
         this.sourceImage = img;
-        this.width = frameWidth;
-        this.height = frameHeight;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;
+        this.collisionRectX = 0;
+        this.collisionRectY = 0;
         this.collisionRectWidth = frameWidth;
         this.collisionRectHeight = frameHeight;
+
+        boolean swap = (transform >= TRANS_MIRROR_ROT270);
+        this.width = swap ? frameHeight : frameWidth;
+        this.height = swap ? frameWidth : frameHeight;
+        updateCollisionRect();
+        setRefPixelPosition(refX, refY);
 
         if (getRawFrameCount() < oldRawFrameCount) {
 
@@ -413,8 +438,8 @@ public class Sprite extends Layer {
      * @param y
      */
     public void setRefPixelPosition(int x, int y) {
-        this.x = x - this.dRefX;
-        this.y = y - this.dRefY;
+        this.x = x - getTransformedRefX();
+        this.y = y - getTransformedRefY();
     }
 
     /**
@@ -423,6 +448,121 @@ public class Sprite extends Layer {
      * @param transform
      */
     public void setTransform(int transform) {
-        // not implemented
+
+        if (transform < 0 || transform > 7) {
+            throw new IllegalArgumentException();
+        }
+
+        // the reference pixel stays at the same position on screen
+        int refX = getRefPixelX();
+        int refY = getRefPixelY();
+
+        this.transform = transform;
+
+        // rotation by 90 or 270 degrees swaps width and height
+        boolean swap = (transform >= TRANS_MIRROR_ROT270);
+        this.width = swap ? frameHeight : frameWidth;
+        this.height = swap ? frameWidth : frameHeight;
+
+        updateCollisionRect();
+        setRefPixelPosition(refX, refY);
+    }
+
+    /**
+     * Gets the reference pixel's x offset under the current transform.
+     */
+    private int getTransformedRefX() {
+        int w = frameWidth - 1;
+        int h = frameHeight - 1;
+
+        switch (transform) {
+        case TRANS_MIRROR:
+        case TRANS_ROT180:
+            return w - dRefX;
+        case TRANS_ROT90:
+        case TRANS_MIRROR_ROT90:
+            return h - dRefY;
+        case TRANS_ROT270:
+        case TRANS_MIRROR_ROT270:
+            return dRefY;
+        default: // TRANS_NONE, TRANS_MIRROR_ROT180
+            return dRefX;
+        }
+    }
+
+    /**
+     * Gets the reference pixel's y offset under the current transform.
+     */
+    private int getTransformedRefY() {
+        int w = frameWidth - 1;
+        int h = frameHeight - 1;
+
+        switch (transform) {
+        case TRANS_MIRROR_ROT180:
+        case TRANS_ROT180:
+            return h - dRefY;
+        case TRANS_ROT90:
+        case TRANS_MIRROR_ROT270:
+            return dRefX;
+        case TRANS_ROT270:
+        case TRANS_MIRROR_ROT90:
+            return w - dRefX;
+        default: // TRANS_NONE, TRANS_MIRROR
+            return dRefY;
+        }
+    }
+
+    /**
+     * Transforms the collision rectangle with the current transform.
+     */
+    private void updateCollisionRect() {
+        int x = collisionRectX;
+        int y = collisionRectY;
+        int w = collisionRectWidth;
+        int h = collisionRectHeight;
+        int fw = frameWidth;
+        int fh = frameHeight;
+
+        switch (transform) {
+        case TRANS_MIRROR:
+            x = fw - x - w;
+            break;
+        case TRANS_MIRROR_ROT180:
+            y = fh - y - h;
+            break;
+        case TRANS_ROT180:
+            x = fw - x - w;
+            y = fh - y - h;
+            break;
+        case TRANS_ROT90:
+            x = fh - collisionRectY - h;
+            y = collisionRectX;
+            w = collisionRectHeight;
+            h = collisionRectWidth;
+            break;
+        case TRANS_ROT270:
+            x = collisionRectY;
+            y = fw - collisionRectX - w;
+            w = collisionRectHeight;
+            h = collisionRectWidth;
+            break;
+        case TRANS_MIRROR_ROT90:
+            x = fh - collisionRectY - h;
+            y = fw - collisionRectX - w;
+            w = collisionRectHeight;
+            h = collisionRectWidth;
+            break;
+        case TRANS_MIRROR_ROT270:
+            x = collisionRectY;
+            y = collisionRectX;
+            w = collisionRectHeight;
+            h = collisionRectWidth;
+            break;
+        }
+
+        tCollisionRectX = x;
+        tCollisionRectY = y;
+        tCollisionRectWidth = w;
+        tCollisionRectHeight = h;
     }
 }

@@ -137,8 +137,10 @@ public class List extends Screen implements Choice {
 	boolean keyPressedPreprocess(int keyCode) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("List.keyPressedPreprocess()");
 
-//TODO
-		boolean intercepted = false;//super.keyPressedPreprocess(keyCode);
+		//soft keys trigger the commands (SELECT, CLOSE, ...)
+		if (softKeyPressed(keyCode)) return true;
+
+		boolean intercepted = false;
 
 		if (false);
 		else if (keyCode == Canvas.KEY_NUM5 | keyCode == DisplayProperties.KEY_TRIGGER) {

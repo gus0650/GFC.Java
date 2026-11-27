@@ -273,7 +273,7 @@ public class TiledLayer extends Layer {
      */
     public final void paint(Graphics g) {
 
-        // save some fields to local var´s for speed
+        // save some fields to local varÂ´s for speed
         int cellWidth = this.cellWidth;
         int cellHeight = this.cellHeight;
         Image sourceImage = this.sourceImage;
@@ -300,7 +300,7 @@ public class TiledLayer extends Layer {
         // calculate y-position, we start drawing first row
         int runY = (cy < 0) ? 0 : cy - (cy % cellHeight);
 
-        // calculate x,y bounds, we won´t get over
+        // calculate x,y bounds, we wonÂ´t get over
         int xBound = cx + cw;
         if (xBound > this.width) {
             xBound = this.width;
@@ -458,7 +458,7 @@ public class TiledLayer extends Layer {
         // calculate y-position, we start drawing first row
         int runY = (y < 0) ? 0 : y - (y % cellHeight);
 
-        // calculate x,y bounds, we won´t get over
+        // calculate x,y bounds, we wonÂ´t get over
         int xBound = x + width;
         if (xBound > this.width) {
             xBound = this.width;
