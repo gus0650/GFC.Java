@@ -34,8 +34,9 @@ public abstract class Displayable {
 		g.setColor( Display.getPassiveColor() );
 		g.fillRect( 0, 0, Display.getDisplayWidth(), Display.getDisplayHeight() );
 
-		//translate to underneath title bar
-		if (title != null) g.translate( 0, title.getHeight() );
+		//translate to underneath title bar and ticker
+		if (title  != null) g.translate( 0, title.getHeight() );
+		if (ticker != null) g.translate( 0, ticker.getHeight() );
 
 		//actual clip & translation area excludes title, but includes buttons (if present)
 /*		int paintable_height = getHeight();
@@ -62,6 +63,14 @@ public abstract class Displayable {
 
 		//paint title
 		if ( (title  != null) ) title.paint(g);
+
+		//paint ticker, underneath the title
+		if ( (ticker != null) ) {
+			int ty = (title != null) ? title.getHeight() : 0;
+			g.translate( 0, ty );
+			ticker.paint(g);
+			g.translate( 0, -ty );
+		}
 
 		//paint buttons
 		if ( (btn_left  != null) ) 	btn_left.paint(g);
@@ -151,10 +160,20 @@ public abstract class Displayable {
 	public void setTicker(Ticker ticker) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("Displayable.setTicker()");
 
-		if (ticker != null) ticker.stop();
+		//stop the old ticker
+		if (this.ticker != null) {
+			this.ticker.stop();
+			this.ticker.setOwner(null);
+		}
 		
 		this.ticker = ticker;
-		ticker.run();
+
+		if (ticker != null) {
+			ticker.setOwner(this);
+			ticker.start();
+		}
+
+		repaint();
 	}
 
 

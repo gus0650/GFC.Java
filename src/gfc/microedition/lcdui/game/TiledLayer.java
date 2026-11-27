@@ -136,7 +136,7 @@ public class TiledLayer extends Layer {
         } else if (this.numAnimatedTiles == this.animatedToStatic.length) {
 
             int newArray[] = new int[this.numAnimatedTiles + ARRAY_ADVANCE];
-            System.arraycopy(newArray, 0, this.animatedToStatic, 0,
+            System.arraycopy(this.animatedToStatic, 0, newArray, 0,
                     this.animatedToStatic.length);
             this.animatedToStatic = newArray;
         }
@@ -198,7 +198,7 @@ public class TiledLayer extends Layer {
      */
     public int getAnimatedTile(int animatedTileIndex) {
 
-        if (animatedTileIndex >= 0 || (-animatedTileIndex) >= numAnimatedTiles) {
+        if (animatedTileIndex >= 0 || (-animatedTileIndex) > numAnimatedTiles) {
             throw new IndexOutOfBoundsException();
         }
 
@@ -322,13 +322,16 @@ public class TiledLayer extends Layer {
                 // get tile index
                 int tile = cellMatrix[i++];
 
-                if (tile > 0) {
-                    tile--;
-                } else if (tile < 0) {
+                // animated tile -> its static tile (1-based, 0 = empty)
+                if (tile < 0) {
                     tile = animatedToStatic[-tile - 1];
-                } else {
+                }
+
+                if (tile == 0) {
                     continue; // empty cell
                 }
+
+                tile--; // static tiles are 1-based
 
                 // clip to cell area
                 g.clipRect(runX, runY, cellWidth, cellHeight);
@@ -360,7 +363,7 @@ public class TiledLayer extends Layer {
      */
     public void setAnimatedTile(int animatedTileIndex, int staticTileIndex) {
         
-        if (animatedTileIndex >= 0 || (-animatedTileIndex) >= numAnimatedTiles) {
+        if (animatedTileIndex >= 0 || (-animatedTileIndex) > numAnimatedTiles) {
             throw new IndexOutOfBoundsException();
         }
         

@@ -88,14 +88,15 @@ public class LayerManager {
         int cw = g.getClipWidth();
         int ch = g.getClipHeight();
 
+        // the view window is shown at (x,y) in the painter's coordinate system
         g.clipRect(x, y, viewWidth, viewHeight);
-        g.translate(viewX, viewY);
+        g.translate(x - viewX, y - viewY);
 
         for (int i = component.size() - 1; i >= 0; i--) {
             ((Layer) component.elementAt(i)).paint(g);
         }
 
-        g.translate(-viewX, -viewY);
+        g.translate(-(x - viewX), -(y - viewY));
         g.setClip(cx, cy, cw, ch);
     }
 
