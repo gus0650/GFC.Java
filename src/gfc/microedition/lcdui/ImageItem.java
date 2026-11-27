@@ -46,9 +46,6 @@ public class ImageItem extends Item {
 
 
 	public void setLayout( int layout ) {
-		ii_layout = layout;
-		//TODO
-		
-		System.err.println("WARNING -- ImageItem.setLayout() not yet implemented");
+		throw new UnsupportedOperationException("ImageItem.setLayout() is not implemented in GFC.Java -- see TODO.txt");
 	}
 }

@@ -59,9 +59,16 @@ Not supported (on purpose)
 - pixel level collision: Sprite.collidesWith(..., true) throws an UnsupportedOperationException, use false
 - Display.vibrate() and flashBacklight() do nothing and return false, like a handset without vibrator
 
+Parts of MIDP that are not implemented yet (see TODO.txt) throw an UnsupportedOperationException when they are used,
+so a game fails clearly instead of silently doing the wrong thing.
+Spacer, DateField and CustomItem exist only for that reason: games that mention them compile.
+
 
 This code was written in Visual Studio Code with the Oracle Java extension.
 Load "TestMIDlet" and it should run out of the box. (F5)
+TestMIDlet is a showcase of everything GFC.Java can do: graphics, images, text, keys, a little game with
+sprites and tiles, particles, sound and music, save games, forms, lists, text input, alerts, network.
+It uses res/duke.jpg, res/sound.wav and res/music.mid.
 
 Original MIDP documentation:
 https://docs.oracle.com/javame/config/cldc/ref-impl/midp2.0/jsr118/index.html

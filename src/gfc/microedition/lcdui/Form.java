@@ -22,6 +22,8 @@ public class Form extends Screen {
 
 	
 	public int append( Item item ) {
+		checkSupported(item);
+
 		item.setScreen(this);
 		f_item_group.append( item );
 		return f_item_group.size() - 1;	//index of the new item
@@ -29,7 +31,7 @@ public class Form extends Screen {
 
 	
 	public int append( String s ) {
-		StringItem si = new StringItem( "none", s );
+		StringItem si = new StringItem( null, s );
 		
 		int index = append( si );
 		posHome();
@@ -38,7 +40,7 @@ public class Form extends Screen {
 
 
 	public int append( Image img ) {
-		ImageItem ii = new ImageItem( "none", img, 0, "none" );
+		ImageItem ii = new ImageItem( null, img, 0, null );
 		
 		int index = append( ii );
 		posHome();
@@ -54,6 +56,8 @@ public class Form extends Screen {
 
 
 	public void insert( int item_id, Item item ) {
+		checkSupported(item);
+
 		item.setScreen(this);
 		f_item_group.insert(item_id, item);
 		
@@ -62,6 +66,8 @@ public class Form extends Screen {
 
 
 	public void set( int item_id, Item item ) {
+		checkSupported(item);
+
 		item.setScreen(this);
 		f_item_group.set(item_id, item);
 		
@@ -112,4 +118,12 @@ public class Form extends Screen {
 		//
 	}
 	*/
+
+	/**
+	 * Form does not pass keys to its items yet -> items that need input would not work.
+	 */
+	private void checkSupported( Item item ) {
+		if (item instanceof TextField) 		throw new UnsupportedOperationException("TextField in a Form is not implemented in GFC.Java -- see TODO.txt (use a TextBox)");
+		if (item instanceof ChoiceGroup) 	throw new UnsupportedOperationException("ChoiceGroup in a Form is not implemented in GFC.Java -- see TODO.txt (use a List)");
+	}
 }

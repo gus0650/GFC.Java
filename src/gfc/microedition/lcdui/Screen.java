@@ -15,6 +15,13 @@ abstract public class Screen extends Canvas {
 	}
 	
 
+	/** a Screen shows title, ticker and soft key buttons -> less room than a Canvas */
+	@Override
+	public int getHeight() {
+		return getContentHeight();
+	}
+
+
 	void setContent( Item item ) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("Screen.setContent()");
 

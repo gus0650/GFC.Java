@@ -24,7 +24,7 @@ public class Gauge extends Item {
 		g_interactive	= interactive;
 		
 		if (initialValue > maxValue) throw new IllegalArgumentException();
-		if (interactive) System.err.println("WARNING in Gauge(): interactive mode not implemented");
+		if (interactive) throw new UnsupportedOperationException("interactive Gauge is not implemented in GFC.Java -- see TODO.txt");
 		
 		g_gauge 			= createWidget();
 		

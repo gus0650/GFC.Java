@@ -107,18 +107,12 @@ public class ChoiceGroup extends Item implements Choice {
 
 
 	public Image getImage( int elementNum ) {
-		//TODO
-		System.err.println("ChoiceGroup.getImage() - method not implemented");
-
-		return null;
+		throw new UnsupportedOperationException("ChoiceGroup.getImage() is not implemented in GFC.Java -- see TODO.txt");
 	}
 
 
 	public int getSelectedFlags( boolean[] selectedArray_return ) {
-		//TODO
-		System.err.println("ChoiceGroup.getSelectedFlags() - method not implemented");
-
-		return -1;
+		throw new UnsupportedOperationException("ChoiceGroup.getSelectedFlags() is not implemented in GFC.Java -- see TODO.txt");
 	}
 
 
@@ -140,42 +134,27 @@ public class ChoiceGroup extends Item implements Choice {
 
 
 	public String getString( int elementNum ) {
-		//TODO
-		System.err.println("ChoiceGroup.getString() - method not implemented");
-
-		return null;
+		throw new UnsupportedOperationException("ChoiceGroup.getString() is not implemented in GFC.Java -- see TODO.txt");
 	}
 
 
 	public void insert( int elementNum, String stringElement, Image imageElement ) {
-		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ChoiceGroup.insert()");
-
-		//TODO
-		System.err.println("ChoiceGroup.insert() - method not implemented");
+		throw new UnsupportedOperationException("ChoiceGroup.insert() is not implemented in GFC.Java -- see TODO.txt");
 	}
 
 
 	public boolean isSelected( int elementNum ) {
-		//TODO
-		System.err.println("ChoiceGroup.isSelected() - method not implemented");
-
-		return false;
+		throw new UnsupportedOperationException("ChoiceGroup.isSelected() is not implemented in GFC.Java -- see TODO.txt");
 	}
 
 
 	public void set( int elementNum, String stringElement, Image imageElement ) {
-		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ChoiceGroup.set()");
-
-		//TODO
-		System.err.println("ChoiceGroup.set() - method not implemented");
+		throw new UnsupportedOperationException("ChoiceGroup.set() is not implemented in GFC.Java -- see TODO.txt");
 	}
 
 
 	public void setSelectedFlags( boolean[] selectedArray ) {
-		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ChoiceGroup.setSelectedFlags()");
-
-		//TODO
-		System.err.println("ChoiceGroup.setSelectedFlags() - method not implemented");
+		throw new UnsupportedOperationException("ChoiceGroup.setSelectedFlags() is not implemented in GFC.Java -- see TODO.txt");
 	}
 
 

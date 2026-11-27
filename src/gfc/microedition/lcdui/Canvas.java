@@ -89,6 +89,12 @@ public abstract class Canvas extends Displayable {
 		display.threadedRepaint();
 	}
 
+	/** a Canvas always covers the whole screen (no title, ticker or soft key area is shown) */
+	@Override
+	public int getHeight() {
+		return Display.getDisplayHeight();
+	}
+
 	public void setFullScreenMode(boolean mode) {
 		//nop -- a Canvas always covers the whole window
 	}

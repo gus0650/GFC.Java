@@ -5,6 +5,6 @@ public class Split {
 	
 	
 	public static void main(String[] args) {
-		System.err.println("split tool not implemented");
+		throw new UnsupportedOperationException("split tool is not implemented in GFC.Java -- see TODO.txt");
 	}
 }

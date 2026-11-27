@@ -99,6 +99,11 @@ public abstract class Displayable {
 	}
 	
 	public int getHeight() {
+		return getContentHeight();
+	}
+
+	/** screen height minus ticker, title and soft key buttons -- the area a Screen can use */
+	int getContentHeight() {
 		int h = Display.getDisplayHeight();
 		
 		if (ticker   != null) 			h -= ticker.getHeight();
