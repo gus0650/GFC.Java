@@ -72,7 +72,11 @@ public class Panel extends Widget {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("Panel.insert()");
 
 		p_widgets.insertElementAt(w, index);
+		w.setDisplayable( this.getDisplayable() );
 		w.setPanel( this ) ;
+
+		//the selected widget moved one place down
+		if (index <= p_selected_index && p_widgets.size() > 1) p_selected_index++;
 		
 		doLayout();
 	}
@@ -84,8 +88,13 @@ public class Panel extends Widget {
 	public void remove( Widget w ) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("Panel.remove()");
 
+		int index = p_widgets.indexOf(w);
 		p_widgets.removeElement(w);
 		w.setPanel( null );
+
+		//keep the selection valid
+		if (index != -1 && index < p_selected_index) p_selected_index--;
+		if (p_selected_index >= p_widgets.size()) p_selected_index = Math.max(0, p_widgets.size() - 1);
 		
 		doLayout();
 	}
@@ -157,7 +166,8 @@ public class Panel extends Widget {
 			
 			Widget w = (Widget)p_widgets.elementAt(i);
 			
-			if ( w.containsPoint(x - getAbsX(), y - getAbsY()) ) {
+			//containsPoint() works with absolute coordinates already
+			if ( w.containsPoint(x, y) ) {
 				w.triggerCommand(cl, d);
 			}
 		}

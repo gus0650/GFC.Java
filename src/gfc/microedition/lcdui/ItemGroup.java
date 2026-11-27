@@ -41,24 +41,30 @@ class ItemGroup extends Item {
 	}
 	
 	
-	public void delete( int elementNum ) throws IllegalArgumentException {
-		if (elementNum > ig_choice_items.size()) throw new IllegalArgumentException();
-		
+	public void delete( int elementNum ) {
+		if (elementNum < 0 || elementNum >= ig_choice_items.size()) throw new IndexOutOfBoundsException("item " + elementNum);
+
+		//remove from the panel too -- was only removed from the list and still shown
+		Item item = (Item)ig_choice_items.elementAt(elementNum);
+		ig_panel.remove( item.getWidget() );
 		ig_choice_items.removeElementAt(elementNum);
 	}
-	
-	
+
 	void insert( int item_id, Item item ) {
+		if (item_id < 0 || item_id > ig_choice_items.size()) throw new IndexOutOfBoundsException("item " + item_id);
+
+		ig_panel.insert( item.getWidget(), item_id );
 		ig_choice_items.insertElementAt(item, item_id);
 	}
-	
-	
-	void set( int item_id, Item item ) throws IllegalArgumentException {
-		if (item_id > ig_choice_items.size()) throw new IllegalArgumentException();
 
+	void set( int item_id, Item item ) {
+		if (item_id < 0 || item_id >= ig_choice_items.size()) throw new IndexOutOfBoundsException("item " + item_id);
+
+		Item old = (Item)ig_choice_items.elementAt(item_id);
+		ig_panel.remove( old.getWidget() );
+		ig_panel.insert( item.getWidget(), item_id );
 		ig_choice_items.setElementAt(item, item_id);
 	}
-	
 	
 	int size() {
 		return ig_choice_items.size();

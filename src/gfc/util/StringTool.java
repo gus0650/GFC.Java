@@ -219,7 +219,11 @@ public final class StringTool {
 	 */
 	public final static String[] linesAsArray( String str ) {
 		
-		String[] strar = new String[ countOccurences( str, "\n" ) ];
+		//a last line without line break counts too
+		int lines = countOccurences( str, "\n" );
+		if (str.length() > 0 && str.charAt(str.length() - 1) != '\n') lines++;
+
+		String[] strar = new String[ lines ];
 		
 		int curr_pos = 0;
 		int line_end = 0;
@@ -236,6 +240,9 @@ public final class StringTool {
 
 			curr_pos++;
 		}
+
+		//last line without line break
+		if (arr_index < strar.length) strar[arr_index] = str.substring( line_end );
 		
 		return strar;
 	}
@@ -509,22 +516,18 @@ public final class StringTool {
 
 	
     public final static int indexOf(StringBuffer sb, String str, int fromIndex) {
-
         int str_len = str.length();
-        int sb_len = sb.length() - str_len;
-        int cur = 0;
+        int last = sb.length() - str_len;	// last possible start position
 
-        for (int i = fromIndex; i < sb_len; i++) {
-
-            while (sb.charAt(i) == str.charAt(cur)) {
-                if (++cur == str_len) {
-                    return i;
-                }
+        for (int i = Math.max(0, fromIndex); i <= last; i++) {
+            int cur = 0;
+            while (cur < str_len && sb.charAt(i + cur) == str.charAt(cur)) {
+                cur++;
             }
-
-            cur = 0;
+            if (cur == str_len) {
+                return i;
+            }
         }
-
         return -1;
     }
     
@@ -555,20 +558,18 @@ public final class StringTool {
 				
 		while ( s < text_length ) {
 
+			//make sure next line does not start with white-space
+			while (s < text_length && text.charAt(s) == WHITESPACE) {
+				s++;
+			}
+			if (s >= text_length) break;	//only white-space left
+
 			if( ( s + l ) > text_length ) {
 				l = text_length - s;
 			}
 			
 			/* extract "l"-chars from start "s" */
 			text.getChars( s, s + l, line, 0 );
-
-			//make sure next line does not start with white-space
-			while (line[0] == WHITESPACE)  {
-				s++;
-				if (s+l > text_length) l--;
-					
-				text.getChars( s, s + l, line, 0 );
-			}
 			
 			/* advance to next starting point */
 			s += l;

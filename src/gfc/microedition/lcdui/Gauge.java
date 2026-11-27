@@ -26,17 +26,7 @@ public class Gauge extends Item {
 		if (initialValue > maxValue) throw new IllegalArgumentException();
 		if (interactive) System.err.println("WARNING in Gauge(): interactive mode not implemented");
 		
-		g_gauge 			= new GaugeX( 
-								100,	//TODO
-								10, 	//TODO
-								0,
-								0,
-								getScreen(),
-								0,
-								maxValue,
-								DisplayProperties.getActiveColor(),
-								DisplayProperties.getPassiveColor()
-							);
+		g_gauge 			= createWidget();
 		
 		setWidget( g_gauge );
 		
@@ -55,15 +45,38 @@ public class Gauge extends Item {
 
 
 	public void setMaxValue( int maxValue ) {
+		if (maxValue <= 0) throw new IllegalArgumentException("maxValue must be > 0");
+
 		g_max_value = maxValue;
+		if (g_value > maxValue) g_value = maxValue;
+
+		g_gauge.setMaxValue( maxValue );
+		g_gauge.setValue( g_value );
 	}
-
-
-	public void setValue( int newvalue ) throws IllegalArgumentException {
-		g_value = newvalue;
-	}
-
 	
+	public void setValue( int newvalue ) throws IllegalArgumentException {
+		//like MIDP: values outside 0..max are clamped
+		if (newvalue < 0) 			newvalue = 0;
+		if (newvalue > g_max_value) newvalue = g_max_value;
+
+		g_value = newvalue;
+		g_gauge.setValue( newvalue );	//was: only stored, the widget did not change
+	}
+
+	private GaugeX createWidget() {
+		return new GaugeX( 
+				100,	//TODO
+				10, 	//TODO
+				0,
+				0,
+				getScreen(),
+				0,
+				g_max_value,
+				DisplayProperties.getActiveColor(),
+				DisplayProperties.getPassiveColor()
+			);
+	}
+
 	public boolean isInteractive() {
 		return g_interactive;
 	}

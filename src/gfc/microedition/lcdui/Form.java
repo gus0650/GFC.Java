@@ -23,32 +23,26 @@ public class Form extends Screen {
 	
 	public int append( Item item ) {
 		item.setScreen(this);
-		
 		f_item_group.append( item );
-
-		return 1;
+		return f_item_group.size() - 1;	//index of the new item
 	}
 
 	
 	public int append( String s ) {
 		StringItem si = new StringItem( "none", s );
 		
-		append( si );
-		
+		int index = append( si );
 		posHome();
-		
-		return 1;
+		return index;
 	}
 
 
 	public int append( Image img ) {
 		ImageItem ii = new ImageItem( "none", img, 0, "none" );
 		
-		append( ii );
-
+		int index = append( ii );
 		posHome();
-		
-		return 1;
+		return index;
 	}
 
 
@@ -60,6 +54,7 @@ public class Form extends Screen {
 
 
 	public void insert( int item_id, Item item ) {
+		item.setScreen(this);
 		f_item_group.insert(item_id, item);
 		
 		posHome();
@@ -67,6 +62,7 @@ public class Form extends Screen {
 
 
 	public void set( int item_id, Item item ) {
+		item.setScreen(this);
 		f_item_group.set(item_id, item);
 		
 		posHome();

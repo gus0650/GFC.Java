@@ -34,6 +34,11 @@ abstract class Gauge extends Widget {
 	}
 	
 	
+	public void setMaxValue(int max) {
+		max_value = max;
+		repaint();
+	}
+
 	public void setValue(int v) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("Gauge.setValue() " +v);
 		

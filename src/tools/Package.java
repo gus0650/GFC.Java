@@ -13,10 +13,10 @@ public class Package {
 		"process the directories and the files contained therein.";
 	
 	public static void main(String[] args) {
-		if (args.length < 1 || args.length > 2) throw new IllegalArgumentException(HELP);
+		if (args.length != 2) throw new IllegalArgumentException(HELP);
 		
 		int r = concatWithIndex( 
-					FileToolkit.allFilesIn(args[0]),
+					FileToolkit.onlyFilesIn(args[0]),
 					args[1]	);
 		
 		if (r > 0) System.exit(0);
@@ -36,6 +36,7 @@ public class Package {
 			f.createNewFile();
 
 			target = new RandomAccessFile(target_filename, "rw");
+			target.setLength(0);	//an existing target file is overwritten, not just partly
 			
 			int i;
 			for (i = 0; i < source_filenames.length; i++) {

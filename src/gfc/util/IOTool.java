@@ -7,6 +7,54 @@ import java.io.*;
  * Utility class that provides static methods for various i/o operations.
  */
 final public class IOTool {
+
+	/**
+	 * Opens a resource like on the handset: "/res/x.bin" and "res/x.bin" are looked up in the classpath
+	 * (also inside a .jar), then in the working directory.
+	 * (byte[].class / String.class can't find the game's resources since Java 9.)
+	 * 
+	 * @return the stream, or null if not found
+	 */
+	public static InputStream open(String filename) {
+		String path = filename.startsWith("/") ? filename : "/" + filename;
+
+		InputStream is = IOTool.class.getResourceAsStream(path);
+		if (is != null) return is;
+
+		File f = new File( filename.startsWith("/") ? filename.substring(1) : filename );
+		if (!f.exists()) f = new File(filename);
+
+		try {
+			if (f.exists()) return new FileInputStream(f);
+		}
+		catch (IOException e) {
+			//not readable
+		}
+		return null;
+	}
+
+	/** skip() may skip less than asked for -- this skips exactly n bytes (or up to the end). */
+	private static void skipFully(InputStream is, long n) throws IOException {
+		while (n > 0) {
+			long k = is.skip(n);
+			if (k <= 0) {
+				if (is.read() == -1) return;	//end of stream
+				k = 1;
+			}
+			n -= k;
+		}
+	}
+
+	/** reads until the array is full or the stream ends */
+	private static int readFully(InputStream is, byte[] into) throws IOException {
+		int done = 0;
+		while (done < into.length) {
+			int k = is.read(into, done, into.length - done);
+			if (k == -1) break;
+			done += k;
+		}
+		return done;
+	}
 	
 	
 	public static void loadFile(String filename, byte[] into) {
@@ -15,7 +63,7 @@ final public class IOTool {
 		try {
 			DataInputStream dis;
 			
-			dis = new DataInputStream( into.getClass().getResourceAsStream( filename ) );
+			dis = new DataInputStream( open( filename ) );
 			dis.readFully(into);
 			
 			dis.close();
@@ -31,11 +79,11 @@ final public class IOTool {
 		try {
 			DataInputStream dis;
 			
-			dis = new DataInputStream( into.getClass().getResourceAsStream( filename ) );
+			dis = new DataInputStream( open( filename ) );
 			
-			dis.skip(skip);
+			skipFully(dis, skip);
 			
-			dis.read(into);
+			readFully(dis, into);
 			
 			dis.close();
 		}
@@ -52,7 +100,7 @@ final public class IOTool {
 		try {
 			DataInputStream in;
 			
-			in = new DataInputStream( into.getClass().getResourceAsStream( filename ) );
+			in = new DataInputStream( open( filename ) );
 			
 			into = new byte[ in.available() ];
 
@@ -76,9 +124,12 @@ final public class IOTool {
 		try {
 			InputStream is;
 
-			is = filename.getClass().getResourceAsStream( filename );
+			is = open( filename );
 
-			fs = is.skip(Long.MAX_VALUE);
+			//count all bytes (skip() may stop early on some streams)
+			byte[] buf = new byte[4096];
+			int k;
+			while ((k = is.read(buf)) != -1) fs += k;
 
 			is.close();
 		}
@@ -97,7 +148,7 @@ final public class IOTool {
     	try {
 			InputStream is;
 
-			is = filename.getClass().getResourceAsStream( filename );
+			is = open( filename );
 			is.close();
     		
     		return true;
@@ -124,13 +175,13 @@ final public class IOTool {
 		try {
 			for (int i = 0; i < chunkNum; i++) {
 				len = is.read();
-				is.skip(len);
+				skipFully(is, len);
 			}
 			
 			len = is.read();
 			data = new byte[len];
 			
-			is.read(data);
+			readFully(is, data);
 		}
 		catch (Exception e) {
 			/*config:debug:ON*/e.printStackTrace();
@@ -146,7 +197,7 @@ final public class IOTool {
 		try {
 			InputStream in;
 			
-			in = filename.getClass().getResourceAsStream( filename );
+			in = open( filename );
 			data = readChunk(in, chunkNum);
 			in.close();
 		}

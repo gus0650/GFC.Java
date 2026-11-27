@@ -11,13 +11,13 @@ package gfc.graphics;
  */
 public class Palette {
 
-	byte[] colors;
+	int[] colors;	//full RGB colors (was byte[] -- only the blue part of a color fitted in)
 	int capacity;
 	
 	public Palette(int capacity) {
 		this.capacity = capacity;
 
-		colors = new byte[capacity];
+		colors = new int[capacity];
 	}
 	
 	
@@ -33,7 +33,7 @@ public class Palette {
 	 * @return - the Color at the specified index
 	 */
 	public Color getColor(int index) {
-		if ((index > capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
+		if ((index >= capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
 
 		return new Color(colors[index]);
 	}
@@ -43,9 +43,9 @@ public class Palette {
 	 * @return - the color value at the specified index
 	 */
 	public byte getColorValue(int index) {
-		if ((index > capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
+		if ((index >= capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
 
-		return colors[index];
+		return (byte)colors[index];
 	}
 
 
@@ -53,9 +53,9 @@ public class Palette {
 	 * Set the Color at the specified index
 	 */
 	public void setColor(int index, Color c) {
-		if ((index > capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
+		if ((index >= capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
 
-		colors[index] = (byte)c.getRGB();
+		colors[index] = c.getRGB();
 	}
 
 	
@@ -63,7 +63,7 @@ public class Palette {
 	 * Set the color value at the specified index
 	 */
 	public void setColor(int index, byte colorvalue) {
-		if ((index > capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
+		if ((index >= capacity) | (index < 0)) System.err.println("ERROR in Palette: illegal index value "+ index);
 		
 		colors[index] = colorvalue;
 	}

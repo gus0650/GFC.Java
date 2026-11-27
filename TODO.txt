@@ -1,11 +1,18 @@
 TODO
 
-List and Menu work now (tested), Form, Alert, TextBox, ChoiceGroup still have TODOs
+List, Menu, Alert, TextBox and Ticker work now (tested), Form, ChoiceGroup, ImageItem, Gauge still have TODOs
+not implemented yet (found while testing everything):
+  ChoiceGroup / List: getString(), isSelected(), getSelectedFlags(), setSelectedFlags(), set(), insert(), getImage()
+  Item labels are not shown (Item builds a Panel of label + widget, but only the widget is used, and the panel has no layout)
+  Alert does not show its image
+  ImageItem.setLayout(), interactive Gauge
+  tools.Split
+Form does not pass keys to its items yet -> a TextField in a Form can't be edited (in a TextBox it can)
+Display.setCurrentItem() does not scroll to the item yet
 
-keyboard and mouse now reach Canvas, GameCanvas and List (via the "Preprocess" methods in Displayable)
+keyboard and mouse now reach Canvas, GameCanvas, List and TextBox (via the "Preprocess" methods in Displayable)
  noch offen:
    InputListener
-   TextBox
    Form
    ...
 

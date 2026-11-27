@@ -59,6 +59,8 @@ public class MathTool1000 {
 				19081, 28636, 57289, 0 };
 
 		angle %= 360;
+		if (angle < 0)
+			angle += 360; //no negative angles
 
 		if (angle <= 90) {
 			//0..90 degrees

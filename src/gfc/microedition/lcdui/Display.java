@@ -79,6 +79,25 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 		current.showNotify();
 
 		repaint();
+
+		/* alerts with a timeout go back by themselves */
+		if (s instanceof Alert) startAlertTimer( (Alert)s );
+	}
+
+	/**
+	 * After the timeout of the alert, go back to the previous Displayable
+	 * (or to nextDisplayable, see setCurrent(Alert, Displayable)).
+	 */
+	private void startAlertTimer( final Alert alert ) {
+		int timeout = alert.getTimeout();
+		if (timeout == Alert.FOREVER || timeout <= 0) return;
+
+		javax.swing.Timer t = new javax.swing.Timer( timeout, e -> {
+			//only if the alert is still on screen
+			if (current == alert) setPrevious();
+		});
+		t.setRepeats(false);
+		t.start();
 	}
 	
 	/**
@@ -90,22 +109,8 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 
 		setCurrent(alert);
 
-		//DISMISS goes back to "previous" -> make that the next displayable
+		//DISMISS and the timeout go back to "previous" -> make that the next displayable
 		previous = nextDisplayable;
-
-		//timeout
-		final int timeout = alert.getTimeout();
-		if (timeout == Alert.FOREVER || timeout <= 0) return;
-
-		final Alert a 			= alert;
-		final Displayable next 	= nextDisplayable;
-
-		javax.swing.Timer t = new javax.swing.Timer( timeout, e -> {
-			//only if the alert is still on screen
-			if (current == a) setCurrent(next);
-		});
-		t.setRepeats(false);
-		t.start();
 	}
 
 	/**
@@ -309,7 +314,14 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 
 	@Override
 	public void keyTyped( KeyEvent ke ) {
-		//nop -- awt delivers no key code here, keyPressed() handles everything
+		//awt delivers no key code here, keyPressed() handles the handset keys.
+		//the typed character is passed on for text input (TextBox)
+		if (current == null) 	return;
+
+		char c = ke.getKeyChar();
+		if (c == KeyEvent.CHAR_UNDEFINED) return;
+
+		current.keyTypedPreprocess(c);
 	}
 
 	boolean pointer_down = false;
@@ -425,7 +437,7 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 
 		//let the game paint into the buffer
 		java.awt.Graphics2D bg = buffer.createGraphics();
-		this.g.set(bg);
+		this.g.set(bg, w, h);
 		paint(this.g);
 		bg.dispose();
 
@@ -518,6 +530,8 @@ final public class Display extends JPanel implements MouseListener, MouseMotionL
 	}
 
 	public static Font getGFCFont() {
+		//load on first use -- screens may be created before the Display
+		if (font == null) font = Font.loadFromProperties();
 		return font;
 	}
 

@@ -25,20 +25,39 @@ public class CRCTool {
 			e.printStackTrace();
 		}
 		
-		test = new byte[data.length-4];
-
-		System.out.println( calculateCRC32(test) );
-
-		int b, cs = 0;
-		for( int i = 3; i >= 0; i -- ) {
-			b = data[data.length-4+i];
-			
-			cs |= b << (i * 8);
+		if (data == null) {
+			System.err.println("no PLTE chunk found");
+			return;
 		}
-		System.out.println( cs );
+
+		//extractChunk() returns the chunk data followed by the 4 byte CRC
+		byte[] chunk = new byte[data.length - 4];
+		System.arraycopy(data, 0, chunk, 0, chunk.length);
+
+		long stored = 0;
+		for (int i = data.length - 4; i < data.length; i++) {
+			stored = (stored << 8) | (data[i] & 0xFF);
+		}
+
+		long calculated = calculateCRC32("PLTE", chunk);
+
+		System.out.println("stored CRC:     " + Long.toHexString(stored));
+		System.out.println("calculated CRC: " + Long.toHexString(calculated));
+		System.out.println(stored == calculated ? "CRC ok" : "CRC WRONG");
 	}
-	
-	
+
+	/**
+	 * CRC-32 of a PNG chunk: covers the chunk type and the chunk data (not the length).
+	 * (was a CRC-8 over an empty array)
+	 */
+	static long calculateCRC32(String chunk_type, byte[] chunk_data) {
+		java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+		crc.update( chunk_type.getBytes() );
+		crc.update( chunk_data );
+		return crc.getValue();
+	}
+
+	/** old experiment: a CRC-8 (polynomial 0x1D), not used */
 	static byte calculateCRC32(byte[] in) {
 		int i, j;
 		int len = in.length;

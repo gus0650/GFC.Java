@@ -33,7 +33,8 @@ public class ChoiceGroup extends Item implements Choice {
 	void notifyPressed() {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ChoiceGroup.notifyPressed()");
 		
-		ChoiceItem current = ((ChoiceItem)cg_choice_items.elementAt( getSelectedIndex() ));
+		//the highlighted element (getSelectedIndex() returns the checked one for EXCLUSIVE)
+		ChoiceItem current = ((ChoiceItem)cg_choice_items.elementAt( cg_panel.getSelectedIndex() ));
 
 		switch (cg_type) {
 			case EXCLUSIVE:
@@ -93,7 +94,7 @@ public class ChoiceGroup extends Item implements Choice {
             cifirst.setChecked(true);
         }
 		
-		return 1;
+		return cg_choice_items.size() - 1;	//index of the new element
 	}
 	
 	
@@ -123,6 +124,16 @@ public class ChoiceGroup extends Item implements Choice {
 
 	public int getSelectedIndex() {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ChoiceGroup.getSelectedIndex()");
+
+		//MIDP: MULTIPLE has no single selection, EXCLUSIVE returns the checked element
+		if (cg_type == Choice.MULTIPLE) return -1;
+
+		if (cg_type == Choice.EXCLUSIVE) {
+			for (int i = 0; i < cg_choice_items.size(); i++) {
+				if (((ChoiceItem)cg_choice_items.elementAt(i)).isChecked()) return i;
+			}
+			return -1;
+		}
 
 		return cg_panel.getSelectedIndex();
 	}
@@ -171,10 +182,25 @@ public class ChoiceGroup extends Item implements Choice {
 	public void setSelectedIndex( int elementNum, boolean selected ) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ChoiceGroup.setSelectedIndex()");
 
-		if (cg_type == Choice.EXCLUSIVE) deselectAll(); 
-		
 		ChoiceItem ci = ((ChoiceItem)cg_choice_items.elementAt( elementNum ));
-		ci.setChecked(true);
+
+		if (cg_type == Choice.MULTIPLE) {
+			//MULTIPLE: check or uncheck just this element (selected was ignored)
+			ci.setChecked(selected);
+			return;
+		}
+
+		//IMPLICIT / EXCLUSIVE: only "true" changes something -- this element becomes the selected one
+		if (!selected) return;
+
+		if (cg_type == Choice.EXCLUSIVE) {
+			deselectAll();
+			ci.setChecked(true);
+		}
+
+		//move the highlight there too
+		cg_panel.selectFirst();
+		for (int i = 0; i < elementNum; i++) cg_panel.selectNext();
 	}
 
 

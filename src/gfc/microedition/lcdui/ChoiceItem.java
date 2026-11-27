@@ -66,6 +66,8 @@ class ChoiceItem extends Item implements WidgetSelectListener {
 
 
 	void setChecked(boolean flag) {
+		checked = flag;	//was missing -- isChecked() was always false
+
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ChoiceItem.setChecked() " + flag);
 		
 		if (flag) {

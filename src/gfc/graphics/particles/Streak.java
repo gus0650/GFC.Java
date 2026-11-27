@@ -39,8 +39,9 @@ public class Streak implements Animation {
 		
 		default_ticks 	= pTicksToLive;
 		
-		deceleration 	= (1 << Streak.FIXED_POINT_SHIFT) / (10 * pDeceleration);
-		gravity 		= (1 << Streak.FIXED_POINT_SHIFT) / (10 * pGravity);
+		//0 = no deceleration / no gravity (was a division by zero)
+		deceleration 	= (pDeceleration == 0) ? 0 : (1 << Streak.FIXED_POINT_SHIFT) / (10 * pDeceleration);
+		gravity 		= (pGravity == 0) 		? 0 : (1 << Streak.FIXED_POINT_SHIFT) / (10 * pGravity);
 	}
 
 	

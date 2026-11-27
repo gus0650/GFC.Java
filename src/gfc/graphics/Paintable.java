@@ -181,12 +181,12 @@ abstract public class Paintable {
 			py = 0;
 		}
 		
-		canvas.repaint();
+		if (canvas != null) canvas.repaint();	//no canvas -> painted into an image
 	}
 
 	
 	final public void repaintAll() {
-		canvas.repaint();
+		if (canvas != null) canvas.repaint();
 	}
 	
 	abstract protected void draw(Graphics g);

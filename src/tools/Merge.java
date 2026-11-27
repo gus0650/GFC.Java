@@ -17,14 +17,14 @@ public class Merge {
 		String[] files;
 		if (args.length == 2) {
 			//single file or directory specified
-			files = FileToolkit.allFilesIn(args[1]);
+			files = FileToolkit.onlyFilesIn(args[1]);
 		}
 		else {
 			//more than 1 source file specified
 			Vector v = new Vector();
 			
 			for (int i = 1; i < args.length; i++) {
-				String[] morefiles = FileToolkit.allFilesIn(args[i]);
+				String[] morefiles = FileToolkit.onlyFilesIn(args[i]);
 
 				for (int j = 0; j < morefiles.length; j++) {
 					v.add(morefiles[j]);
@@ -57,6 +57,7 @@ public class Merge {
 			f.createNewFile();
 
 			target = new RandomAccessFile(target_filename, "rw");
+			target.setLength(0);	//an existing target file is overwritten, not just partly
 			
 			int i;
 			for (i = 0; i < source_filenames.length; i++) {

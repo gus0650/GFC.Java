@@ -187,6 +187,10 @@ public abstract class Displayable {
 	public void addCommand(Command cmd) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("Displayable.addCommand() " + cmd.getLabel());
 
+		//adding the same command again has no effect, like in MIDP
+		//(Menu added SELECT a second time -> a Menu for the Menu -> endless recursion)
+		if (d_commands.contains(cmd)) return;
+
 		final byte 
 			SIDE_LEFT 	= 0,
 			SIDE_RIGHT 	= 1;
@@ -221,10 +225,10 @@ public abstract class Displayable {
 				
 				if (d_menu_left == null) {
 					//create menu
-					d_menu_left = new Menu( MIDlet.GetAppProperty("TEXT_MENU_OPEN"), this );
+					d_menu_left = new Menu( DisplayProperties.TEXT_MENU_OPEN, this );
 					d_menu_left.add(btn_left.getCommand() );
 					
-					btn_left.setString( MIDlet.GetAppProperty("TEXT_MENU_OPEN") );
+					btn_left.setString( DisplayProperties.TEXT_MENU_OPEN );
 				}
 				
 				d_menu_left.add( cmd );
@@ -250,10 +254,10 @@ public abstract class Displayable {
 
 				if (d_menu_right == null) {
 					//create menu
-					d_menu_right = new Menu( MIDlet.GetAppProperty("TEXT_MENU_OPEN"), this );
+					d_menu_right = new Menu( DisplayProperties.TEXT_MENU_OPEN, this );
 					d_menu_right.add(btn_right.getCommand() );
 					
-					btn_right.setString( MIDlet.GetAppProperty("TEXT_MENU_OPEN") );
+					btn_right.setString( DisplayProperties.TEXT_MENU_OPEN );
 				}
 				
 				d_menu_right.add( cmd );
@@ -291,6 +295,9 @@ public abstract class Displayable {
 	void keyReleasedPreprocess(int keyCode) {}
 
 	void keyRepeatedPreprocess(int keyCode) {}
+
+	/** a character was typed on the keyboard -- used by TextBox */
+	void keyTypedPreprocess(char c) {}
 
 	void pointerPressedPreprocess(int x, int y) {}
 

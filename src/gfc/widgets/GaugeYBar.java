@@ -14,13 +14,11 @@ import gfc.graphics.*;
  */
 public class GaugeYBar extends Gauge {
 
-	private int bar;
 
 	
 	public GaugeYBar(int width, int height, int x, int y, Displayable d, int min_value, int max_value, Color bg, Color fg) {
 		super(width, height, x, y, d, min_value, max_value, bg, fg);
 
-		bar 	= getHeight() / max_value +1;
 	}
 
 	
@@ -31,6 +29,7 @@ public class GaugeYBar extends Gauge {
 		int posy 	= (getHeight() * value) / max_value;
 
 		g.setColor(color_fg.getValue());
-		g.fillRect( 0, posy -bar, getWidth(), getHeight() );
+		//the bar grows from the bottom
+		g.fillRect( 0, getHeight() - posy, getWidth(), posy );
 	}
 }

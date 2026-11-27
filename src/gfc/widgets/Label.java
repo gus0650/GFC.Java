@@ -62,11 +62,11 @@ public class Label extends Widget {
 	public void setString(String s) {
 		if (s == null) s = " ";
 		
-		boolean length_changed = ( s.length() != text.length() );
+		boolean changed = !s.equals(text);	//same length can still mean other line breaks
 		
 		text = s;
 		
-		if ( dynamic && length_changed ) {
+		if ( dynamic && changed ) {
 			//adjust the dimensions so that the entire content is shown
 			setContentWidth  (font.stringWidth( StringTool.longestSubstring(text, '\n')  ) );
 			setContentHeight (font.getHeight() * (StringTool.countOccurences(text, '\n') + 1) );

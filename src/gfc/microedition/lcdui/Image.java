@@ -142,7 +142,7 @@ public class Image {
 		if (!mutable) throw new IllegalStateException("ERROR in Image.getGraphics(): image is immutable");
 
 		Graphics igfx = new Graphics();
-		igfx.set( awtimage.getGraphics() );
+		igfx.set( awtimage.getGraphics(), awtimage.getWidth(), awtimage.getHeight() );
 		
 		return igfx;
 	}
@@ -218,7 +218,7 @@ public class Image {
 		BufferedImage i = new BufferedImage( w, h, BufferedImage.TYPE_INT_ARGB );
 
 		Graphics g = new Graphics();
-		g.set( i.getGraphics() );
+		g.set( i.getGraphics(), w, h );
 		g.drawRegion( image, x, y, width, height, transform, 0, 0, Graphics.TOP | Graphics.LEFT );
 		g.dispose();
 

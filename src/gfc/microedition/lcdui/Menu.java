@@ -21,7 +21,7 @@ public class Menu extends List implements CommandListener {
 	
 		m_commands = new Vector();
 
-		addCommand(SELECT_COMMAND);
+		//SELECT_COMMAND is already added by List (IMPLICIT)
 		addCommand(CLOSE_COMMAND);
 		setCommandListener(this);
 	}

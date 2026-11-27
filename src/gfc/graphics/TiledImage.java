@@ -30,7 +30,7 @@ public class TiledImage {
 	}
 	
 	public void paintTile(Graphics g, int tile, int x, int y) {
-		if ( (tile > tiles) | (tile < -1) ) {
+		if ( (tile >= tiles) | (tile < -1) ) {
 			System.err.println("ERROR in TiledImage.paintTile(): tile index out of range " + tile );
 			return;
 		} 
@@ -76,14 +76,13 @@ public class TiledImage {
 	public Image getTileImage(int tile) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("TiledImage.getTileImage() " + tile);
 		
-		if (tile > tiles) System.err.println("ERROR in TiledImage.getTileImage(): tile ID out of range -- " + tile);
-		
-		Image nimg = Image.createImage(tile_width, tile_height);
-		
-		Graphics g = nimg.getGraphics();
+		if ( (tile >= tiles) | (tile < 0) ) throw new IndexOutOfBoundsException("ERROR in TiledImage.getTileImage(): tile ID out of range -- " + tile);
 
-		paintTile(g, tile, 0, 0);
-		
-		return nimg;
+		//cut the tile out of the image -- keeps transparent pixels transparent
+		//(a mutable image starts white, so drawing the tile into it lost the transparency)
+		int tile_y = tile / tiles_horiz;
+		int tile_x = tile - tile_y * tiles_horiz;
+
+		return Image.createImage( image, tile_x * tile_width, tile_y * tile_height, tile_width, tile_height, 0 );
 	}
 }

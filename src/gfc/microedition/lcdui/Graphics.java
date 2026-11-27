@@ -41,6 +41,10 @@ public class Graphics {
 
 	int stroke_style = SOLID;
 
+	//size of the surface we paint on -- the clip when no clip is set
+	int surface_width 	= -1;
+	int surface_height 	= -1;
+
 	static final Stroke STROKE_SOLID 	= new BasicStroke(1);
 	static final Stroke STROKE_DOTTED 	= new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[] {1, 1}, 0);
 
@@ -53,6 +57,9 @@ public class Graphics {
 		if (g == null) throw new NullPointerException();
 		awtgraphics = g;
 
+		surface_width 	= -1;
+		surface_height 	= -1;
+
 		//awt graphics object starts without translation
 		trans_x = 0;
 		trans_y = 0;
@@ -60,29 +67,39 @@ public class Graphics {
 		if (stroke_style == DOTTED) setStrokeStyle(DOTTED);
 	}
 
+	/** Graphics of an image or buffer of the given size */
+	void set(java.awt.Graphics g, int width, int height) {
+		set(g);
+		surface_width 	= width;
+		surface_height 	= height;
+
+		//start with a clip of the whole surface, like on the handset -- getClip*() and translate() then always agree
+		awtgraphics.setClip(0, 0, width, height);
+	}
+
 	// --clip
 
 	public int getClipX() {
 		java.awt.Rectangle r = awtgraphics.getClipBounds();
-		if (r == null) return 0;
+		if (r == null) return -trans_x;
 		return r.x;
 	}
 
 	public int getClipY() {
 		java.awt.Rectangle r = awtgraphics.getClipBounds();
-		if (r == null) return 0;
+		if (r == null) return -trans_y;
 		return r.y;
 	}
 
 	public int getClipWidth() {
 		java.awt.Rectangle r = awtgraphics.getClipBounds();
-		if (r == null) return Display.getDisplayWidth();
+		if (r == null) return (surface_width  >= 0) ? surface_width  : Display.getDisplayWidth();
 		return r.width;
 	}
 
 	public int getClipHeight() {
 		java.awt.Rectangle r = awtgraphics.getClipBounds();
-		if (r == null) return Display.getDisplayHeight();
+		if (r == null) return (surface_height >= 0) ? surface_height : Display.getDisplayHeight();
 		return r.height;
 	}
 

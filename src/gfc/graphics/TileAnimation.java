@@ -27,7 +27,7 @@ public class TileAnimation extends TiledImage implements Animation {
 	}
 
 	public void toNextFrame() {
-		if ( frame < numTiles() ) frame++;
+		if ( frame < numTiles() - 1 ) frame++;	//stay on the last frame
 	}
 
 	public boolean hasMoreFrames() {

@@ -3,11 +3,11 @@ package gfc.tools;
 public class ReplaceStrings {
 
 	static final String HELP = 
-		"Usage: package <token> <sourcefile> <targetfile>\n" +
-		"Purpose: replace all occurences of <token> string in <sourcefile> with contents of <sourcefile>.";
+		"Usage: replacestrings <token> <sourcefile> <targetfile>\n" +
+		"Purpose: replace all occurences of <token> string in <targetfile> with contents of <sourcefile>.";
 	
 	public static void main(String[] args) {
-		if (args.length < 1 || args.length > 2) throw new IllegalArgumentException(HELP);
+		if (args.length != 3) throw new IllegalArgumentException(HELP);
 
 		int r = replaceTokens( 
 				args[0], 
@@ -28,16 +28,20 @@ public class ReplaceStrings {
 				+ "' in file '" + target_filename
 				+ "' with contents of file '" + source_filename + "'" );
 
-		int i;
-		for (i = 0; target.indexOf(token) >= 0; target.insert(i, source)) {
-			i = target.indexOf(token);
+		//search on after the inserted text -- if source contains the token, this would loop forever otherwise
+		int count = 0;
+		int i = target.indexOf(token);
+		while (i >= 0) {
 			target.delete(i, i + token.length());
+			target.insert(i, source);
+			count++;
+			i = target.indexOf(token, i + source.length());
 		}
 
 		FileToolkit.writeToFile(target, target_filename);
 
-		System.out.print("*** done.");
+		System.out.print("*** done. " + count + " replaced.");
 
-		return i;
+		return count;
 	}
 }

@@ -33,37 +33,33 @@ public class MathTool {
 	 * Calculates the suqare root of a number through Newton's formula.
 	 * <p>
 	 * 
-	 * This method does not use floating point math. It therefore returns only
-	 * an approximated integer value as result.
+	 * This method does not use floating point math. It returns the integer
+	 * square root, rounded down (sqrt(8) = 2).
 	 * 
 	 * @param a -
 	 *            the number of which to calculate the square root
-	 * @return - approx. square root value of a
+	 * @return - square root of a, rounded down
 	 */
 	public static int sqrt(int a) throws IllegalArgumentException {
 		if (a < 0)
 			throw new IllegalArgumentException("argument must be > 0: " + a);
-		if (a == 0)
-			return 0;
-		if (a == 1)
-			return 1;
 
-		int x, xp, err;
-		x = a / 2;
+		if (a < 2)
+			return a;
 
-		do {
-			xp = a / x;
-			xp = xp + x;
-			xp = xp / 2;
-			/* i.e. xp = (a/x + x)/2 */
-			err = Math.abs(xp - x);
-			x = xp;
-		} while (err > 1);
+		//newton iteration, until x*x <= a < (x+1)*(x+1)  (result is rounded down)
+		long x = a / 2;
+		long xp = (x + a / x) / 2;
 
-		return x;
+		while (xp < x) {
+			x 	= xp;
+			xp 	= (x + a / x) / 2;
+		}
+
+		return (int)x;
 	}
-	
-	
+
+
 	/**
 	 * checks if two lines intersect
 	 */
@@ -93,6 +89,7 @@ public class MathTool {
     	final int[] SINES = { 0, 44, 88, 128, 165, 196, 222, 241, 252, 256 };
     	
     	angle %= 36;    		 // 360 degrees
+    	if (angle < 0) angle += 36;	 // no negative angles
         if (angle <= 9)          // 0..90 degrees
         {
             return SINES[angle];

@@ -188,6 +188,13 @@ public class Font extends TiledImage {
 	}
 	
 	
+	/** true if this font has a letter for c (space and line break always work) */
+	boolean hasChar(char c) {
+		if (c == ' ' || c == '\n') return true;
+		return (c >= offset) && (c - offset < tiles);
+	}
+
+
 	public boolean hasSmallLetters() {
 		return ( tiles >= 90 );
 	}

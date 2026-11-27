@@ -6,7 +6,10 @@ public final class StateMachine {
 	private State current_state;
 	
 	public void toState(State s) {
-		current_state.leaveState();
+		//no state yet at the first call
+		if (current_state != null) current_state.leaveState();
+
+		current_state = s;
 		s.enterState();
 	}
 	

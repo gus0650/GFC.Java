@@ -16,8 +16,8 @@ public class Alert extends Screen implements CommandListener {
 	private Image					a_image;
 	private StringItem				a_stringitem;
 	
-	public static final Command 	DISMISS_COMMAND 	= new Command(MIDlet.GetAppProperty("TEXT_DISMISS"), 	Command.CANCEL, 0 );
-	private static final Command	MORE_COMMAND		= new Command(MIDlet.GetAppProperty("TEXT_MORE"), 		Command.OK, 0 );
+	public static final Command 	DISMISS_COMMAND 	= new Command(DisplayProperties.TEXT_DISMISS, 	Command.CANCEL, 0 );
+	private static final Command	MORE_COMMAND		= new Command(DisplayProperties.TEXT_MORE, 		Command.OK, 0 );
 	
 
 	public Alert(String title) {
@@ -83,9 +83,12 @@ public class Alert extends Screen implements CommandListener {
 	}
 
 	
+	/**
+	 * @param time - time in ms after which the alert goes away by itself, or FOREVER
+	 */
 	public void setTimeout(int time) {
-		//TODO implement
-		
+		if ( (time <= 0) & (time != FOREVER) ) throw new IllegalArgumentException("timeout must be > 0 or FOREVER");
+
 		this.a_timeout = time;
 	}
 

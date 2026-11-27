@@ -61,8 +61,8 @@ public class Scroller extends Widget {
      *            string to be set for the Ticker.
      */
     public void setString(String text) {
-        if (string == null) {
-            new NullPointerException();
+        if (text == null) {
+            throw new NullPointerException();
         }
 
         scrollPos = 0;

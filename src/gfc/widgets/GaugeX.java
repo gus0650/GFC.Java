@@ -13,17 +13,17 @@ import gfc.graphics.*;
  */
 public class GaugeX extends Gauge {
 
-	private int bar;
 	
 
 	public GaugeX(int width, int height, int x, int y, Displayable d, int min_value, int max_value, Color bg, Color fg) {
 		super(width, height, x, y, d, min_value, max_value, bg, fg);
 
-		bar 	= getWidth() / max_value +1;
 	}
 
 	
 	public void draw(Graphics g) {
+		int bar = getWidth() / max_value +1;	//size of one step -- calculated here, max_value can change
+
 		g.setColor( color_bg.getValue() );
 		g.fillRect( 0, 0, getWidth(), getHeight() );
 

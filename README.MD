@@ -46,6 +46,8 @@ Keys are mapped to a Nokia handset:
 | Backspace                 | clear              | -8       |
 | 0..9, numpad 0..9, * #    | number keys        | '0'..'9', '*', '#' |
 
+In a TextBox, text is typed with the PC keyboard: Backspace deletes, cursor left/right move the caret, F1/F2 trigger the commands.
+
 Alt-F4 closes the window, minimizing the window pauses the MIDlet.
 
 Not supported (on purpose)

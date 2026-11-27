@@ -6,7 +6,7 @@ import gfc.graphics.*;
 import java.util.Vector;
 
 
-//TODO: Horiz, Vert
+//Horiz, Vert: createHorzTableLayout(), createVertTableLayout()
 //TODO: padding
 
 /**
@@ -48,7 +48,7 @@ public final class Layout {
     }
 
     public static Layout createVertTableLayout(int rows) {
-        return new Layout(TABLE_HORZ, 0, rows);
+        return new Layout(TABLE_VERT, 0, rows);
     }
 
     public static Layout createStackLayout() {
@@ -114,93 +114,69 @@ public final class Layout {
      * max number of rows. <code>param3</code>- padding between table cells.
      */
     private void tableLayout(Vector widgets) {
-
         int nWidget = widgets.size();
-        int iWidget = 0;
-        int xExtend = 0;
-        int yExtend = 0;
-
-        // loop trough rows
-        int rows = 0;
-        for (; ((type == TABLE_HORZ) || (rows < param2)) && (iWidget < nWidget); rows++) {
-
-            int rowOffset = iWidget; // save start index of this row
-            int rowHeight = 0;
-
-            // loop trough columns
-            for (int col = 0; ((type == TABLE_VERT) || (col < param1))
-                    && (iWidget < nWidget); col++) {
-
-                Widget w = (Widget) widgets.elementAt(iWidget);
-
-                // find out highest Widget in current row
-                if (w.getHeight() > rowHeight) {
-                    rowHeight = w.getHeight();
-                }
-
-                if (rows > 0) {
-                    // get x from Widget at column in first row
-                    w.setPosition(((Widget) widgets.elementAt(col)).getX(),
-                            yExtend);
-
-                } else {
-                    w.setPosition(xExtend, yExtend);
-
-                    // find out width of current column in this first row
-                    int colWidth = 0;
-
-                    for (int j = col; j < widgets.size(); j += param1) {
-                        int width = ((Widget) widgets.elementAt(j)).getWidth();
-
-                        if (width > colWidth) {
-                            colWidth = width;
-                        }
-                    }
-
-                    xExtend += colWidth;
-                }
-
-                iWidget++; // step to next widget in list
-            }
-
-            // align rows > 0
-            if ((rows > 0) && (rowOffset < iWidget)) {
-
-                for (; rowOffset < (iWidget - 1); rowOffset++) {
-                    Widget w = (Widget) widgets.elementAt(rowOffset);
-                    alignWidgetToRect(w, w.getX(), w.getY(), ((Widget) widgets
-                            .elementAt(rowOffset + 1)).getX()
-                            - w.getX(), rowHeight);
-                }
-
-                Widget w = (Widget) widgets.elementAt(rowOffset);
-                alignWidgetToRect(w, w.getX(), w.getY(), xExtend - w.getX(),
-                        rowHeight);
-            }
-
-            yExtend += rowHeight;
+        if (nWidget == 0) {
+            return;
         }
 
-        // align first row
-        if (nWidget > 0) {
-
-            // height of first row
-            int rowHeight = (rows > 1) ? ((Widget) widgets.elementAt(param1))
-                    .getX() : yExtend;
-
-            iWidget = 0;
-            for (; ((type == TABLE_VERT) || (iWidget < (param1 - 1)))
-                    && iWidget < nWidget; iWidget++) {
-                Widget w = (Widget) widgets.elementAt(iWidget);
-                alignWidgetToRect(w, w.getX(), w.getY(), ((Widget) widgets
-                        .elementAt(iWidget + 1)).getX()
-                        - w.getX(), rowHeight);
-            }
-
-            Widget w = (Widget) widgets.elementAt(iWidget);
-            alignWidgetToRect(w, w.getX(), w.getY(), xExtend - w.getX(),
-                    rowHeight);
+        // number of columns and rows
+        //   TABLE:      param1 columns, param2 rows, widgets fill row by row, extra widgets are not placed
+        //   TABLE_HORZ: param1 columns, as many rows as needed, filled row by row
+        //   TABLE_VERT: param2 rows, as many columns as needed, filled column by column
+        int cols, rows;
+        if (type == TABLE_VERT) {
+            rows = Math.max(1, param2);
+            cols = (nWidget + rows - 1) / rows;
+        } else if (type == TABLE_HORZ) {
+            cols = Math.max(1, param1);
+            rows = (nWidget + cols - 1) / cols;
+        } else {
+            cols = Math.max(1, param1);
+            rows = Math.max(1, param2);
         }
+
+        int n = Math.min(nWidget, cols * rows);
+
+        // width of each column, height of each row
+        int[] colWidth = new int[cols];
+        int[] rowHeight = new int[rows];
+        for (int i = 0; i < n; i++) {
+            Widget w = (Widget) widgets.elementAt(i);
+            int col = column(i, cols, rows);
+            int row = row(i, cols, rows);
+            if (w.getWidth() > colWidth[col]) {
+                colWidth[col] = w.getWidth();
+            }
+            if (w.getHeight() > rowHeight[row]) {
+                rowHeight[row] = w.getHeight();
+            }
+        }
+
+        // start positions of columns and rows
+        int[] colX = new int[cols];
+        for (int c = 1; c < cols; c++) {
+            colX[c] = colX[c - 1] + colWidth[c - 1];
+        }
+        int[] rowY = new int[rows];
+        for (int r = 1; r < rows; r++) {
+            rowY[r] = rowY[r - 1] + rowHeight[r - 1];
+        }
+
+        // place every widget in its cell
+        for (int i = 0; i < n; i++) {
+            Widget w = (Widget) widgets.elementAt(i);
+            int col = column(i, cols, rows);
+            int row = row(i, cols, rows);
+            alignWidgetToRect(w, colX[col], rowY[row], colWidth[col], rowHeight[row]);
+        }
+    }
+
+    private int column(int i, int cols, int rows) {
+        return (type == TABLE_VERT) ? (i / rows) : (i % cols);
+    }
+
+    private int row(int i, int cols, int rows) {
+        return (type == TABLE_VERT) ? (i % rows) : (i / cols);
     }
 
     /**

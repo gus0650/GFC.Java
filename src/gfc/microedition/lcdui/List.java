@@ -24,10 +24,11 @@ public class List extends Screen implements Choice {
 		l_choicegroup = new ChoiceGroup( null, l_type );
 		setContent(l_choicegroup);
 		
-		if (stringElements.length != imageElements.length) System.err.println("List(): number of stringElements does not match number of imageElements");
+		//imageElements may be null (no images), like in MIDP
+		if (imageElements != null && stringElements.length != imageElements.length) throw new IllegalArgumentException("List(): number of stringElements does not match number of imageElements");
 		
 		for (int i = 0; i < stringElements.length; i++) {
-			append(stringElements[i], imageElements[i]);
+			append(stringElements[i], imageElements == null ? null : imageElements[i]);
 		}
 
 		if (l_type == Choice.IMPLICIT) addCommand(SELECT_COMMAND);
@@ -57,11 +58,9 @@ public class List extends Screen implements Choice {
 	public int append( String stringPart, Image imagePart ) {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("List.append()");
 		
-		l_choicegroup.append( stringPart, imagePart );
-		
+		int index = l_choicegroup.append( stringPart, imagePart );
 		posHome();
-		
-		return 1;
+		return index;
 	}
 
 	@Override

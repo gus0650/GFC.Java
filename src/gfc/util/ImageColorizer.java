@@ -101,9 +101,10 @@ public class ImageColorizer {
 		
 		byte png_data[] = this.png_data;
 		
-		rgb |= png_data[ pos++ ] << 16;
-		rgb |= png_data[ pos++ ] << 8;
-		rgb |= png_data[ pos++ ];
+		//& 0xff -- bytes are signed in java, without it 0x80..0xff would spill into the other channels
+		rgb |= (png_data[ pos++ ] & 0xff) << 16;
+		rgb |= (png_data[ pos++ ] & 0xff) << 8;
+		rgb |= (png_data[ pos++ ] & 0xff);
 		
 		return( rgb );
 	}
@@ -136,12 +137,12 @@ public class ImageColorizer {
 	public final void originalPalette() {
 		
 		try {
-			InputStream is = getClass().getResourceAsStream( this.png_file );
+			InputStream is = IOTool.open( this.png_file );
 
 			/* skip to palette chunk */
-			is.skip( this.png_pal_pos );
+			skipFully( is, this.png_pal_pos );
 			/* read palette into png-data */
-			is.read( this.png_data, this.png_pal_pos, this.png_pal_colors * 3 );			
+			readFully( is, this.png_data, this.png_pal_pos, this.png_pal_colors * 3 );			
 			is.close();
 		
 		} catch (IOException e) {
@@ -296,7 +297,7 @@ public class ImageColorizer {
 		//System.out.println("ImageColorizer.loadSource(): " + filename + " " + filesize);
 		
 		try {
-			InputStream is = getClass().getResourceAsStream( filename );
+			InputStream is = IOTool.open( filename );
 			
 			/* set new file-name */
 			png_file = filename;
@@ -320,13 +321,18 @@ public class ImageColorizer {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ImageColorizer.loadSource(): " + filename );
 		
 		try {
-			InputStream is = getClass().getResourceAsStream( filename );
+			InputStream is = IOTool.open( filename );
+			if (is == null) throw new IOException("ERROR in ImageColorizer: file not found - " + filename);
 			
 			/* set new file-name */
 			png_file = filename;
 			
-			/* load the stream */
-			loadSourceFromStream( is, is.available() );
+			/* load the stream -- available() is not reliable (e.g. inside a .jar), so read it all first */
+			byte[] all = readAll( is );
+			is.close();
+			is = new ByteArrayInputStream( all );
+
+			loadSourceFromStream( is, all.length );
 			is.close();
 		} 
 		catch (IOException e) {
@@ -359,7 +365,7 @@ public class ImageColorizer {
 				this.png_pal_pos = this.png_data_pos;
 							
 				/* read in rest of file-data */
-				is.read( this.png_data, this.png_data_pos, this.png_data.length - this.png_data_pos );
+				readFully( is, this.png_data, this.png_data_pos, this.png_data.length - this.png_data_pos );
 			
 			} else {
 				
@@ -390,9 +396,9 @@ public class ImageColorizer {
 			if( this.png_data_pos < 8 ) {
 				
 				if( read_in ) {
-					is.read( this.png_data, this.png_data_pos, 8 - this.png_data_pos );
+					readFully( is, this.png_data, this.png_data_pos, 8 - this.png_data_pos );
 				} else {
-					is.skip( 8 - this.png_data_pos );
+					skipFully( is, 8 - this.png_data_pos );
 				}
 				
 				this.png_data_pos += ( 8 - this.png_data_pos );
@@ -448,12 +454,12 @@ public class ImageColorizer {
 				/* skip or read data & crc */
 				if( read_in ) {
 					
-					if( is.read( this.png_data, this.png_data_pos, chunk_len + 4 ) < (chunk_len + 4) ) {
+					if( readFully( is, this.png_data, this.png_data_pos, chunk_len + 4 ) < (chunk_len + 4) ) {
 						return ( 0 );						
 					}
 				} else {
 					
-					is.skip( chunk_len + 4 );
+					skipFully( is, chunk_len + 4 );
 				}
 				
 				this.png_data_pos += chunk_len + 4;
@@ -485,10 +491,10 @@ public class ImageColorizer {
 		
 		try {
 			//open file
-			InputStream is = filename.getClass().getResourceAsStream( filename );
+			InputStream is = IOTool.open( filename );
 			
 			//skip png-ident code
-			is.skip( 8 );
+			skipFully( is, 8 );
 			
 			//go through chunks until the wanted chunk is encountered
 			boolean chunk_found = false;
@@ -519,13 +525,13 @@ public class ImageColorizer {
 				}
 
 				//chunk not found, so skip data + crc
-				if (!chunk_found) is.skip(len);
+				if (!chunk_found) skipFully( is, len );
 			}
 			
 			//chunk found, so read data
 			data = new byte[len];
 				
-			if (is.read( data, 0, len ) != len) throw new EOFException();
+			if (readFully( is, data, 0, len ) != len) throw new EOFException();
 				
 			is.close();
 		} 
@@ -550,10 +556,10 @@ public class ImageColorizer {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ImageColorizer.loadPaletteFromPLTEFile() " + filename);
 		
 		try {
-			InputStream is = getClass().getResourceAsStream( filename );
+			InputStream is = IOTool.open( filename );
 			
 			//read palette into png-data
-			is.read( this.png_data, this.png_pal_pos, this.png_pal_colors*3+4 );			
+			readFully( is, this.png_data, this.png_pal_pos, this.png_pal_colors*3+4 );			
 			is.close();
 		
 		} catch (IOException e) {
@@ -574,7 +580,7 @@ public class ImageColorizer {
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("ImageColorizer.loadPaletteFromPNGFile() " + filename);
 
 		try {
-			InputStream is = getClass().getResourceAsStream( filename );
+			InputStream is = IOTool.open( filename );
 			
 			/* reset data position */
 			this.png_data_pos = 0;
@@ -592,7 +598,7 @@ public class ImageColorizer {
 				}
 				
 				/* read in new palette */
-				is.read( this.png_data, this.png_pal_pos, (this.png_pal_colors * 3) + 4 );
+				readFully( is, this.png_data, this.png_pal_pos, (this.png_pal_colors * 3) + 4 );
 				
 			} else
 			if( png_pal_colors == 0 ) {	
@@ -617,5 +623,36 @@ public class ImageColorizer {
 	
 	void recalcCRC() {
 		//TODO -- re-calculate checksum for PLTE chunk after changeBrightness() etc.
+	}
+
+	/** reads len bytes, as far as the stream has them. @return number of bytes read */
+	private static int readFully( InputStream is, byte[] into, int offset, int len ) throws IOException {
+		int done = 0;
+		while (done < len) {
+			int k = is.read( into, offset + done, len - done );
+			if (k == -1) break;
+			done += k;
+		}
+		return done;
+	}
+
+	/** skip() may skip less than asked for */
+	private static void skipFully( InputStream is, long n ) throws IOException {
+		while (n > 0) {
+			long k = is.skip(n);
+			if (k <= 0) {
+				if (is.read() == -1) return;
+				k = 1;
+			}
+			n -= k;
+		}
+	}
+
+	private static byte[] readAll( InputStream is ) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		byte[] buf = new byte[4096];
+		int k;
+		while ((k = is.read(buf)) != -1) bos.write(buf, 0, k);
+		return bos.toByteArray();
 	}
 }

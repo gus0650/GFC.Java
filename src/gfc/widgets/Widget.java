@@ -71,6 +71,8 @@ abstract public class Widget {
 	 * Paint this Widget.
 	 */
 	public void paint(Graphics g) {
+		if (!visible) return;
+
 		if (Boolean.parseBoolean(MIDlet.GetAppProperty("debug"))) System.out.println("Widget.paint()");
 
 		//store clip
@@ -101,13 +103,14 @@ abstract public class Widget {
 		
 		if (tc != null) {
 			g.setColor( tc );
-			if (border_horz > 0) {
-				g.fillRect( 0, 0, 						getWidth(), border_horz );
-				g.fillRect( 0, height + border_horz, 	getWidth(), border_horz );
-			}
+			//border_vert = height of the top and bottom border, border_horz = width of the left and right border
 			if (border_vert > 0) {
-				g.fillRect( 0, 0, 						border_vert, getHeight() );
-				g.fillRect( width + border_vert, 0, 	border_vert, getHeight() );
+				g.fillRect( 0, 0, 						getWidth(), border_vert );
+				g.fillRect( 0, height + border_vert, 	getWidth(), border_vert );
+			}
+			if (border_horz > 0) {
+				g.fillRect( 0, 0, 						border_horz, getHeight() );
+				g.fillRect( width + border_horz, 0, 	border_horz, getHeight() );
 			}
 		}
 		

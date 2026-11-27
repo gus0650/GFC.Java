@@ -57,7 +57,8 @@ public final class TextInput extends Panel {
 		/*config:debug*///System.out.println("TextInput.increase()");
 
 		sequence[p_selected_index]--;
-		if (sequence[p_selected_index] < first_char) sequence[p_selected_index] = last_char;
+		//wrap around -- also when coming from a character outside A..Z (e.g. the empty space)
+		if (sequence[p_selected_index] < first_char || sequence[p_selected_index] > last_char) sequence[p_selected_index] = last_char;
 
 		setElement( getSelectedIndex(), new String(sequence, p_selected_index, 1) );
 	}
@@ -67,7 +68,7 @@ public final class TextInput extends Panel {
 		/*config:debug*///System.out.println("TextInput.decrease()");
 
 		sequence[p_selected_index]++;
-		if (sequence[p_selected_index] > last_char) sequence[p_selected_index] = first_char;
+		if (sequence[p_selected_index] > last_char || sequence[p_selected_index] < first_char) sequence[p_selected_index] = first_char;
 
 		setElement( getSelectedIndex(), new String(sequence, p_selected_index, 1) );
 	}

@@ -15,9 +15,11 @@ abstract public class Audible {
 	
 	
 	public void play() {
+		if (player == null) return;	//file could not be loaded (error was printed when loading)
+
 		try {
 			setVolume(vol);
-			vc.setMute(mute);
+			if (vc != null) vc.setMute(mute);
 			if (player.getMediaTime() > 0) player.setMediaTime(0);
 			player.start();
 		} 
@@ -27,6 +29,8 @@ abstract public class Audible {
 	}
 	
 	public void stop() {
+		if (player == null) return;	//file could not be loaded (error was printed when loading)
+
 		try {
 			player.stop();
 		} 
@@ -46,7 +50,7 @@ abstract public class Audible {
 	public static void setVolume(int v) {
 		vol = v;
 
-		if (music != null) {
+		if (music != null && music.vc != null) {
 			music.vc.setLevel(vol);
 		}
 	}
@@ -54,7 +58,7 @@ abstract public class Audible {
 	public static void setMute(boolean b) {
 		mute = b;
 
-		if (music != null) {
+		if (music != null && music.vc != null) {
 			music.vc.setMute(mute);
 		}
 	}
